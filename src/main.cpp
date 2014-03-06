@@ -1,9 +1,9 @@
-#include "rendercontext.hpp"
+#include "glfwcontext.hpp"
 #include "simplescene.hpp"
 
 int main(int argc, char** argv)
 {
-	rendercontext r;
+	glfwcontext r;
 	simplescene s(r); // Context for scene
 
 	/*r.add_cb(rcphase::draw, [](rendercontext& s) {

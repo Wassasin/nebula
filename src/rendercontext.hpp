@@ -18,16 +18,16 @@ class rendercontext
 public:
 	typedef std::function<void(rendercontext& s)> callback_t;
 
-private:
+protected:
 	std::map<rcphase, std::list<callback_t>> m_cbs;
+
+	rendercontext();
 
 public:
 	glm::mat4 projectionmat;
 	glm::mat4 viewmat;
 
-	rendercontext();
-
 	void add_cb(rcphase p, const callback_t& f);
 
-	void run();
+	void run() = delete;
 };
