@@ -6,5 +6,5 @@ class glfwcontext : public rendercontext
 {
 public:
 	glfwcontext();
-	void run();
+	void run(int argc, char** argv);
 };

@@ -29,5 +29,6 @@ public:
 
 	void add_cb(rcphase p, const callback_t& f);
 
-	void run() = delete;
+	rendercontext(rendercontext&) = delete;
+	void run(int argc, char** argv) = delete;
 };

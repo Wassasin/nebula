@@ -13,7 +13,7 @@ glfwcontext::glfwcontext()
 : rendercontext()
 {}
 
-void glfwcontext::run()
+void glfwcontext::run(int, char**)
 {
 	if(!glfwInit())
 		throw std::runtime_error("Failed to initialize GLFW");
