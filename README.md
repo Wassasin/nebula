@@ -6,6 +6,7 @@ Playing with Volumetric Particle Clouds and Raycasting in OpenGL and C++11
 Goal
 ====
 For this project, I've set the endgoal to be able to render the following:
+
 ![Infinity Nebulae by iNovae studios](http://m1.behance.net/rendition/modules/68643609/disp/a3e4dd1c352efbe6a68c3ef839274444.jpg)
 
 Approach
