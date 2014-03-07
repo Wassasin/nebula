@@ -5,13 +5,14 @@
 #include <random>
 #include <algorithm>
 
-#include "defines.hpp"
+#include <GL/gl.h>
+#include <glm/glm.hpp>
 
 class perlin {
-	std::vector<qsint> m_p;
+	std::vector<int> m_p;
 
 public:
-	perlin(quint seed)
+	perlin(unsigned int seed)
 	{
 		m_p.resize(256);
 		std::iota(m_p.begin(), m_p.end(), 0);
@@ -23,28 +24,32 @@ public:
 		m_p.insert(m_p.end(), m_p.begin(), m_p.end());
 	}
 
-	double noise(qfloat x, qfloat y, qfloat z)
+	double noise(glm::vec3 pos) const
 	{
-		qsint X = (qsint) floor(x) & 255;
-		qsint Y = (qsint) floor(y) & 255;
-		qsint Z = (qsint) floor(z) & 255;
+		GLfloat& x = pos[0];
+		GLfloat& y = pos[1];
+		GLfloat& z = pos[2];
+
+		int X = (int) floor(x) & 255;
+		int Y = (int) floor(y) & 255;
+		int Z = (int) floor(z) & 255;
 
 		x -= floor(x);
 		y -= floor(y);
 		z -= floor(z);
 
-		qfloat u = fade(x);
-		qfloat v = fade(y);
-		qfloat w = fade(z);
+		GLfloat u = fade(x);
+		GLfloat v = fade(y);
+		GLfloat w = fade(z);
 
-		qsint A = m_p[X] + Y;
-		qsint AA = m_p[A] + Z;
-		qsint AB = m_p[A + 1] + Z;
-		qsint B = m_p[X + 1] + Y;
-		qsint BA = m_p[B] + Z;
-		qsint BB = m_p[B + 1] + Z;
+		int A = m_p[X] + Y;
+		int AA = m_p[A] + Z;
+		int AB = m_p[A + 1] + Z;
+		int B = m_p[X + 1] + Y;
+		int BA = m_p[B] + Z;
+		int BB = m_p[B + 1] + Z;
 
-		qfloat res = lerp(w,
+		GLfloat res = lerp(w,
 						  lerp(v,
 							   lerp(u,
 									grad(m_p[AA], x, y, z),
@@ -64,21 +69,21 @@ public:
 	}
 
 private:
-	qfloat fade(qfloat t)
+	GLfloat fade(GLfloat t) const
 	{
 		return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
 	}
 
-	qfloat lerp(qfloat t, qfloat a, qfloat b)
+	GLfloat lerp(GLfloat t, GLfloat a, GLfloat b) const
 	{
 		return a + t * (b - a);
 	}
 
-	qfloat grad(qsint hash, qfloat x, qfloat y, qfloat z)
+	GLfloat grad(int hash, GLfloat x, GLfloat y, GLfloat z) const
 	{
 		int h = hash & 15;
 
-		qfloat u = h < 8 ? x : y,
+		GLfloat u = h < 8 ? x : y,
 			   v = h < 4 ? y : h == 12 || h == 14 ? x : z;
 
 		return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);

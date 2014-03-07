@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "gl.hpp"
+#include "perlin.hpp"
 
 static constexpr size_t VOLUME_TEX_SIZE = 128;
 
@@ -33,6 +34,24 @@ void nebulascene::check_support()
 		throw std::runtime_error("Driver does not support OpenGL Shading Language");
 }
 
+GLfloat exp_curve(const GLfloat x, const GLfloat cover, const GLfloat sharpness)
+{
+	return 1.0f - glm::pow(sharpness, x - cover);
+}
+
+GLfloat octave_map(const perlin& p, size_t octaves, glm::vec3 pos)
+{
+	GLfloat result = 0.0f;
+
+	for(size_t i = 0; i < octaves; ++i)
+	{
+		result += p.noise(pos) / glm::pow(2.0f, (GLfloat)i+1.0f);
+		pos *= 2.0f;
+	}
+
+	return result;
+}
+
 GLuint nebulascene::create_volumetexture()
 {
 	GLuint volume_texture;
@@ -41,68 +60,25 @@ GLuint nebulascene::create_volumetexture()
 	size_t size = VOLUME_TEX_SIZE*VOLUME_TEX_SIZE*VOLUME_TEX_SIZE*4;
 	GLubyte *data = new GLubyte[size];
 
-	for(size_t i = 0; i < texsize*texsize*texsize; ++i)
-	{
-		for(size_t j = 0; j < 3; ++j)
-			data[i*4+j] = 255;
+	perlin p(90832509);
 
-		data[i*4+3] = 50;
-	}
-
-/*
 	for(size_t x = 0; x < VOLUME_TEX_SIZE; ++x)
 		for(size_t y = 0; y < VOLUME_TEX_SIZE; ++y)
 			for(size_t z = 0; z < VOLUME_TEX_SIZE; ++z)
 			{
-				const glm::ivec3 curvec(x, y, z);
+				size_t i = x * texsize * texsize + y * texsize + z;
 
-				data[(x*4)   + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = z%250;
-				data[(x*4)+1 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = y%250;
-				data[(x*4)+2 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-				data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 230;
+				data[i*4+0] = x;
+				data[i*4+1] = y;
+				data[i*4+2] = z;
 
-				{
-					glm::ivec3 p = curvec - glm::ivec3(VOLUME_TEX_SIZE-20,VOLUME_TEX_SIZE-30,VOLUME_TEX_SIZE-30);
-					if(p.length() < 42)
-						data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 0;
-				}
+				glm::vec3 coord(x, y, z);
+				coord /= texsize;
+				coord *= 4.0f;
 
-				{
-					glm::ivec3 p = curvec - glm::ivec3(VOLUME_TEX_SIZE/2,VOLUME_TEX_SIZE/2,VOLUME_TEX_SIZE/2);
-					if(p.length() < 24)
-						data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 0;
-				}
-
-				if(x > 20 && x < 40 && y > 0 && y < VOLUME_TEX_SIZE && z > 10 &&  z < 50)
-				{
-					data[(x*4)   + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 100;
-					data[(x*4)+1 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-					data[(x*4)+2 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = y%100;
-					data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-				}
-
-				if(x > 50 && x < 70 && y > 0 && y < VOLUME_TEX_SIZE && z > 10 &&  z < 50)
-				{
-					data[(x*4)   + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-					data[(x*4)+1 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-					data[(x*4)+2 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = y%100;
-					data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-				}
-
-				if(x > 80 && x < 100 && y > 0 && y < VOLUME_TEX_SIZE && z > 10 &&  z < 50)
-				{
-					data[(x*4)   + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-					data[(x*4)+1 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 70;
-					data[(x*4)+2 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = y%100;
-					data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-				}
-
-				{
-					glm::ivec3 p = curvec - glm::ivec3(24,24,24);
-					if(p.length() < 40)
-						data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 0;
-				}
-			}*/
+				GLfloat v = octave_map(p, 4, coord);
+				data[i*4+3] = 255 * exp_curve(v, 0.5, 0.8);
+			}
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT,1);
 	gl::generate_textures(1, &volume_texture);
@@ -174,15 +150,24 @@ void nebulascene::render_backface(const glm::mat4& mvp)
 
 void nebulascene::raycasting_pass(const glm::mat4& mvp)
 {
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_state->final_texture, 0);
+	//glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_state->final_texture, 0);
 	gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	m_program_raycast.use();
-	m_program_raycast.uniform<glm::mat4>("mvp").set(mvp);
-	m_program_raycast.uniform<GLfloat>("stepsize").set(1.0f/50.0f);
+	//m_program_raycast.bind_attribute(m_state->backface_texture, "tex");
+	//m_program_raycast.bind_attribute(m_state->volume_texture, "volume_tex");
 
-	m_program_raycast.bind_attribute(m_state->backface_texture, "tex");
-	m_program_raycast.bind_attribute(m_state->volume_texture, "volume_tex");
+	m_program_raycast.use();
+
+	gl::active_texture(GL_TEXTURE0);
+	gl::bind_texture(GL_TEXTURE_2D, m_state->backface_texture);
+	m_program_raycast.uniform<GLint>("tex").set(0);
+
+	gl::active_texture(GL_TEXTURE0 + 1);
+	gl::bind_texture(GL_TEXTURE_3D, m_state->volume_texture);
+	m_program_raycast.uniform<GLint>("volume_tex").set(1);
+
+	m_program_raycast.uniform<glm::mat4>("mvp").set(mvp);
+	m_program_raycast.uniform<GLfloat>("stepsize").set(1.0f/100.0f);
 
 	gl::enable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -246,7 +231,7 @@ nebulascene::nebulascene(rendercontext &r)
 	r.add_cb(rcphase::init, [&](rendercontext& r) {
 		check_support();
 
-		gl::clear_color(0.1f, 0.1f, 0.1f, 0.0f);
+		gl::clear_color(0.0f, 0.0f, 0.0f, 0.0f);
 
 		m_program_simple.attach(shader::from_file(shader_type::vertex, "shaders/nebulasimple.vertexshader"));
 		m_program_simple.attach(shader::from_file(shader_type::fragment, "shaders/nebulasimple.fragmentshader"));
@@ -350,11 +335,12 @@ nebulascene::nebulascene(rendercontext &r)
 		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, m_state->renderbuffer);
 
 		render_backface(r.mvp);
-		raycasting_pass(r.mvp);
 
 		/* Disable renderbuffers */
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
-		render_buffer_to_screen(r.size().first, r.size().second);
+		raycasting_pass(r.mvp);
+
+		//render_buffer_to_screen(r.size().first, r.size().second);
 	});
 }

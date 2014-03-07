@@ -4,13 +4,10 @@ in vec3 in_vertex;
 
 uniform mat4 mvp;
 
-out vec4 frag_texcoord;
-out vec4 frag_pos;
+out vec4 frag_vertex;
 
 void main(void)
 {
 	gl_Position = mvp * vec4(in_vertex, 1.0);
-	
-	frag_pos = vec4(in_vertex, 1.0);
-	frag_texcoord = vec4(in_vertex, 1.0);
+	frag_vertex = vec4(in_vertex, 1.0);
 }
