@@ -1,36 +1,46 @@
 #pragma once
 
 #include <GL/glew.h>
+#include <boost/optional.hpp>
 
 #include "rendercontext.hpp"
+#include "shader.hpp"
+#include "vao.hpp"
+#include "vbo.hpp"
 
 class nebulascene
 {
-public:
-	nebulascene(rendercontext& r)
+private:
+	struct state_t
 	{
-		r.add_cb(rcphase::init, [&](rendercontext& r) {
-			glewGetExtension("glMultiTexCoord2fvARB");
-			if(glewGetExtension("GL_EXT_framebuffer_object") )
-				std::cerr << "GL_EXT_framebuffer_object support " << std::endl;
+		size_t rotate_i;
 
-			if(glewGetExtension("GL_EXT_renderbuffer_object"))
-				std::cerr << "GL_EXT_renderbuffer_object support " << std::endl;
+		GLuint volume_texture;
 
-			if(glewGetExtension("GL_ARB_vertex_buffer_object"))
-				std::cerr << "GL_ARB_vertex_buffer_object support" << std::endl;
+		GLuint framebuffer;
 
-			if(GL_ARB_multitexture)
-				std::cerr << "GL_ARB_multitexture support " << std::endl;
+		GLuint backface_texture;
+		GLuint final_texture;
 
-			if (glewGetExtension("GL_ARB_fragment_shader")      != GL_TRUE ||
-				glewGetExtension("GL_ARB_vertex_shader")        != GL_TRUE ||
-				glewGetExtension("GL_ARB_shader_objects")       != GL_TRUE ||
-				glewGetExtension("GL_ARB_shading_language_100") != GL_TRUE)
-			{
-				std::cerr << "Driver does not support OpenGL Shading Language" << std::endl;
-				exit(1);
-			}
-		});
-	}
+		GLuint renderbuffer;
+	};
+
+	static void check_support();
+	static GLuint create_volumetexture();
+	static GLuint create_2dtexture(const size_t width, const size_t height);
+	static GLuint create_renderbuffer(const size_t width, const size_t height);
+
+	void render_backface(const glm::mat4& mvp);
+	void raycasting_pass(const glm::mat4& mvp);
+	void render_buffer_to_screen(const size_t width, const size_t height);
+
+	shader_program m_program_simple;
+	shader_program m_program_raycast;
+
+	vao m_va;
+	vbo<GLfloat> m_vb;
+	boost::optional<state_t> m_state;
+
+public:
+	nebulascene(rendercontext& r);
 };

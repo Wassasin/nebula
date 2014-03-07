@@ -26,13 +26,13 @@ void glfwcontext::run(int, char**)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(1024, 768, "Nebula", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(size().first, size().second, "Nebula", NULL, NULL);
 	if(window == NULL)
 		throw std::runtime_error("Failed to open GLFW window. GPU not 3.3 compatible.");
 
 	glfwMakeContextCurrent(window);
 
-	glfwSetCursorPos(window, 1024/2, 768/2);
+	glfwSetCursorPos(window, size().first/2, size().second/2);
 	glfwSwapInterval(1);
 
 	glewExperimental = true; // Needed for core profile

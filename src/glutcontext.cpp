@@ -20,7 +20,7 @@ void glutcontext::run(int argc, char** argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
 	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(1024, 768);
+	glutInitWindowSize(size().first, size().second);
 	glutCreateWindow("nebula");
 
 	m_singleton = this;

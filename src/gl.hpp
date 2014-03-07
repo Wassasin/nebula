@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <iostream>
 
 #ifdef __APPLE__
 	#include <OpenGL/gl.h>
@@ -133,6 +134,7 @@ namespace gl {
 	X(renderbuffer_storage          , glRenderbufferStorage    )
 	X(shader_source                 , glShaderSource           )
 	X(texture_image_2d              , glTexImage2D             )
+	X(texture_image_3d              , glTexImage3D             )
 	X(texture_parameter_f           , glTexParameterf          )
 	X(texture_parameter_i           , glTexParameteri          )
 	X(uniform_1f                    , glUniform1f              )

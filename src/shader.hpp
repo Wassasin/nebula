@@ -243,15 +243,15 @@ X(glm::uvec2, gl::uniform_2uiv(id, 1, &v[0]));
 X(glm::uvec3, gl::uniform_3uiv(id, 1, &v[0]));
 X(glm::uvec4, gl::uniform_4uiv(id, 1, &v[0]));
 
-X(glm::mat2, gl::uniform_matrix_2fv(id, 1, GL_TRUE, &v[0][0]));
-X(glm::mat3, gl::uniform_matrix_3fv(id, 1, GL_TRUE, &v[0][0]));
-X(glm::mat4, gl::uniform_matrix_4fv(id, 1, GL_TRUE, &v[0][0]));
+X(glm::mat2, gl::uniform_matrix_2fv(id, 1, GL_FALSE, &v[0][0]));
+X(glm::mat3, gl::uniform_matrix_3fv(id, 1, GL_FALSE, &v[0][0]));
+X(glm::mat4, gl::uniform_matrix_4fv(id, 1, GL_FALSE, &v[0][0]));
 
-X(glm::mat3x2, gl::uniform_matrix_2x3fv(id, 1, GL_TRUE, &v[0][0]));
-X(glm::mat2x3, gl::uniform_matrix_3x2fv(id, 1, GL_TRUE, &v[0][0]));
-X(glm::mat4x2, gl::uniform_matrix_2x4fv(id, 1, GL_TRUE, &v[0][0]));
-X(glm::mat2x4, gl::uniform_matrix_4x2fv(id, 1, GL_TRUE, &v[0][0]));
-X(glm::mat4x3, gl::uniform_matrix_3x4fv(id, 1, GL_TRUE, &v[0][0]));
-X(glm::mat3x4, gl::uniform_matrix_4x3fv(id, 1, GL_TRUE, &v[0][0]));
+X(glm::mat3x2, gl::uniform_matrix_2x3fv(id, 1, GL_FALSE, &v[0][0]));
+X(glm::mat2x3, gl::uniform_matrix_3x2fv(id, 1, GL_FALSE, &v[0][0]));
+X(glm::mat4x2, gl::uniform_matrix_2x4fv(id, 1, GL_FALSE, &v[0][0]));
+X(glm::mat2x4, gl::uniform_matrix_4x2fv(id, 1, GL_FALSE, &v[0][0]));
+X(glm::mat4x3, gl::uniform_matrix_3x4fv(id, 1, GL_FALSE, &v[0][0]));
+X(glm::mat3x4, gl::uniform_matrix_4x3fv(id, 1, GL_FALSE, &v[0][0]));
 
 #undef X
