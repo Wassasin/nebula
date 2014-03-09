@@ -8,8 +8,9 @@
 
 #include "gl.hpp"
 #include "perlin.hpp"
+#include "nebulagen.hpp"
 
-static constexpr size_t VOLUME_TEX_SIZE = 128;
+static constexpr size_t SIZE = 128;
 
 void nebulascene::check_support()
 {
@@ -24,7 +25,10 @@ void nebulascene::check_support()
 		std::cerr << "GL_ARB_vertex_buffer_object support" << std::endl;
 
 	if(GL_ARB_multitexture)
-		std::cerr << "GL_ARB_multitexture support " << std::endl;
+		std::cerr << "GL_ARB_multitexture support" << std::endl;
+
+	if(glewGetExtension("GL_ARB_fragment_shader"))
+		std::cerr << "GL_ARB_fragment_shader support" << std::endl;
 
 	if (glewGetExtension("GL_ARB_fragment_shader")      != GL_TRUE ||
 		glewGetExtension("GL_ARB_vertex_shader")        != GL_TRUE ||
@@ -34,50 +38,30 @@ void nebulascene::check_support()
 		throw std::runtime_error("Driver does not support OpenGL Shading Language");
 }
 
-GLfloat exp_curve(const GLfloat x, const GLfloat cover, const GLfloat sharpness)
-{
-	return 1.0f - glm::pow(sharpness, x - cover);
-}
-
-GLfloat octave_map(const perlin& p, size_t octaves, glm::vec3 pos)
-{
-	GLfloat result = 0.0f;
-
-	for(size_t i = 0; i < octaves; ++i)
-	{
-		result += p.noise(pos) / glm::pow(2.0f, (GLfloat)i+1.0f);
-		pos *= 2.0f;
-	}
-
-	return result;
-}
-
 GLuint nebulascene::create_volumetexture()
 {
 	GLuint volume_texture;
 
-	size_t texsize = VOLUME_TEX_SIZE;
-	size_t size = VOLUME_TEX_SIZE*VOLUME_TEX_SIZE*VOLUME_TEX_SIZE*4;
+	static constexpr size_t size = SIZE*SIZE*SIZE*4;
+
+	nebulagen<SIZE> generator(2154214789);
 	GLubyte *data = new GLubyte[size];
 
-	perlin p(90832509);
+	auto volume = generator.generate();
+	std::cerr << sizeof(volume) << std::endl;
 
-	for(size_t x = 0; x < VOLUME_TEX_SIZE; ++x)
-		for(size_t y = 0; y < VOLUME_TEX_SIZE; ++y)
-			for(size_t z = 0; z < VOLUME_TEX_SIZE; ++z)
+	for(size_t x = 0; x < SIZE; ++x)
+		for(size_t y = 0; y < SIZE; ++y)
+			for(size_t z = 0; z < SIZE; ++z)
 			{
-				size_t i = x * texsize * texsize + y * texsize + z;
+				size_t i = x * SIZE * SIZE + y * SIZE + z;
+				glm::uvec3 pos(x, y, z);
+				glm::vec4 v = volume[pos];
 
-				data[i*4+0] = x;
-				data[i*4+1] = y;
-				data[i*4+2] = z;
-
-				glm::vec3 coord(x, y, z);
-				coord /= texsize;
-				coord *= 4.0f;
-
-				GLfloat v = octave_map(p, 4, coord);
-				data[i*4+3] = 255 * exp_curve(v, 0.5, 0.8);
+				data[i*4+0] = 255 * v.r;
+				data[i*4+1] = 255 * v.g;
+				data[i*4+2] = 255 * v.b;
+				data[i*4+3] = 255 * v.a;
 			}
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT,1);
@@ -89,7 +73,7 @@ GLuint nebulascene::create_volumetexture()
 	gl::texture_parameter_i(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	gl::texture_parameter_i(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	gl::texture_parameter_i(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-	gl::texture_image_3d(GL_TEXTURE_3D, 0, GL_RGBA, VOLUME_TEX_SIZE, VOLUME_TEX_SIZE,VOLUME_TEX_SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	gl::texture_image_3d(GL_TEXTURE_3D, 0, GL_RGBA, SIZE, SIZE, SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	delete []data;
 	std::cerr << "Volume texture created" << std::endl;
@@ -153,9 +137,6 @@ void nebulascene::raycasting_pass(const glm::mat4& mvp)
 	//glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_state->final_texture, 0);
 	gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//m_program_raycast.bind_attribute(m_state->backface_texture, "tex");
-	//m_program_raycast.bind_attribute(m_state->volume_texture, "volume_tex");
-
 	m_program_raycast.use();
 
 	gl::active_texture(GL_TEXTURE0);
@@ -167,7 +148,7 @@ void nebulascene::raycasting_pass(const glm::mat4& mvp)
 	m_program_raycast.uniform<GLint>("volume_tex").set(1);
 
 	m_program_raycast.uniform<glm::mat4>("mvp").set(mvp);
-	m_program_raycast.uniform<GLfloat>("stepsize").set(1.0f/100.0f);
+	m_program_raycast.uniform<GLfloat>("stepsize").set(1.0f/200.0f);
 
 	gl::enable(GL_CULL_FACE);
 	glCullFace(GL_BACK);

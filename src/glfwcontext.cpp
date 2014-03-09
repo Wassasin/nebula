@@ -22,16 +22,19 @@ void glfwcontext::run(int, char**)
 
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	//glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	m_size.first = mode->width;
+	m_size.second = mode->height;
 
 	GLFWwindow* window = glfwCreateWindow(size().first, size().second, "Nebula", NULL, NULL);
 	if(window == NULL)
 		throw std::runtime_error("Failed to open GLFW window. GPU not 3.3 compatible.");
 
 	glfwMakeContextCurrent(window);
-
 	glfwSetCursorPos(window, size().first/2, size().second/2);
 	glfwSwapInterval(1);
 
@@ -40,8 +43,8 @@ void glfwcontext::run(int, char**)
 
 	if(glGetError() == GL_INVALID_ENUM)
 		std::cerr << "Swallowing false GL_INVALID_ENUM" << std::endl;
-	else
-		throw std::runtime_error("glGetError should have returned GL_INVALID_ENUM");
+	//else
+	//	throw std::runtime_error("glGetError should have returned GL_INVALID_ENUM");
 
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -49,14 +52,8 @@ void glfwcontext::run(int, char**)
 	for(const callback_t& f : m_cbs[rcphase::init])
 		f(*this);
 
-	double lastTime = glfwGetTime();
 	do
 	{
-		double currentTime = glfwGetTime();
-		double delta = currentTime - lastTime;
-		std::cerr << (1.0f / delta) << std::endl;
-		lastTime = currentTime;
-
 		for(const callback_t& f : m_cbs[rcphase::update])
 			f(*this);
 

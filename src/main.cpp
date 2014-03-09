@@ -1,3 +1,4 @@
+#include "glfwcontext.hpp"
 #include "glutcontext.hpp"
 #include "simplescene.hpp"
 #include "nebulascene.hpp"
