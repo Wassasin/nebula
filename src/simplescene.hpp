@@ -69,11 +69,11 @@ private:
 
 		glm::mat4 projection = glm::perspective(60.0f, (GLfloat)r.size().first/(GLfloat)r.size().second, 1.0f, 100.0f);
 
-		r.mvp = projection * glm::lookAt(
+		/*r.mvp = projection * glm::lookAt(
 			glm::vec3(dist*std::cos(rad), 0.5, dist*std::sin(rad)),
 			glm::vec3(0.0, 0.0, 0.0),
 			glm::vec3(0.0, 1.0, 0.0)
-		);
+		);*/
 	}
 
 	void draw(rendercontext& r)
@@ -88,7 +88,7 @@ private:
 		gl::draw_arrays(GL_TRIANGLES, 0, 3);
 		glDisableVertexAttribArray(0);
 
-		m_state->mvp.set(r.mvp);
+		//m_state->mvp.set(r.mvp);
 	}
 
 public:

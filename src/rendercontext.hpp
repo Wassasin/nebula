@@ -5,12 +5,22 @@
 #include <functional>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+//#include "quaternion.hpp"
 
 enum class rcphase {
 	init,
 	update,
 	draw,
 	cleanup
+};
+
+struct camera_t {
+	glm::vec3 position;
+	glm::vec2 rotation;
+
+	glm::mat4 to_matrix() const;
 };
 
 class rendercontext
@@ -25,7 +35,7 @@ protected:
 	rendercontext();
 
 public:
-	glm::mat4 mvp;
+	camera_t camera;
 
 	void add_cb(rcphase p, const callback_t& f);
 	const std::pair<size_t, size_t>& size() const;

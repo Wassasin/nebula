@@ -71,8 +71,8 @@ public:
 					v.r = fpos.x;
 					v.g = fpos.y;
 					v.b = fpos.z;
-					//v.a = glm::clamp(exp_curve(octave_point(p, 4, fpos*8.0f), 0.5f, 50.0f), 0.0f, 1.0f);
-					v.a = exp_curve(sine_point(p, fpos*2.0f, glm::vec3(0.2f, 1.0f, 0.2f), 5.0f, 16), 0.5, 10.0f);
+					v.a = glm::clamp(exp_curve(octave_point(p, 4, fpos*8.0f), 0.5f, 50.0f), 0.0f, 1.0f);
+					//v.a = exp_curve(sine_point(p, fpos*2.0f, glm::vec3(0.2f, 1.0f, 0.2f), 5.0f, 16), 0.5, 10.0f);
 				}
 
 		return result;

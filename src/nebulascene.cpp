@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "gl.hpp"
@@ -110,13 +111,13 @@ GLuint nebulascene::create_renderbuffer(const size_t width, const size_t height)
 	return renderbuffer;
 }
 
-void nebulascene::render_backface(const glm::mat4& mvp)
+void nebulascene::render_backface()
 {
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_state->backface_texture, 0);
 	gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	m_program_simple.use();
-	m_program_simple.uniform<glm::mat4>("mvp").set(mvp);
+	m_program_simple.uniform<glm::mat4>("mvp").set(m_mvp);
 
 	gl::enable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
@@ -132,7 +133,7 @@ void nebulascene::render_backface(const glm::mat4& mvp)
 	gl::use_program(0);
 }
 
-void nebulascene::raycasting_pass(const glm::mat4& mvp)
+void nebulascene::raycasting_pass()
 {
 	//glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_state->final_texture, 0);
 	gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -147,7 +148,7 @@ void nebulascene::raycasting_pass(const glm::mat4& mvp)
 	gl::bind_texture(GL_TEXTURE_3D, m_state->volume_texture);
 	m_program_raycast.uniform<GLint>("volume_tex").set(1);
 
-	m_program_raycast.uniform<glm::mat4>("mvp").set(mvp);
+	m_program_raycast.uniform<glm::mat4>("mvp").set(m_mvp);
 	m_program_raycast.uniform<GLfloat>("stepsize").set(1.0f/200.0f);
 
 	gl::enable(GL_CULL_FACE);
@@ -275,7 +276,6 @@ nebulascene::nebulascene(rendercontext &r)
 		GLuint renderbuffer = create_renderbuffer(r.size().first, r.size().second);
 
 		m_state.reset({
-			0,
 			volume_texture,
 			framebuffer,
 			backface_texture,
@@ -284,30 +284,21 @@ nebulascene::nebulascene(rendercontext &r)
 		});
 	});
 
+	r.add_cb(rcphase::init, [&](rendercontext& r) {
+		r.camera.position = glm::vec3(0.0f, 0.0f, -2.25f);
+		r.camera.rotation = glm::vec2(0.0f, 0.0f);
+	});
+
 	r.add_cb(rcphase::update, [&](rendercontext& r) {
 		glm::mat4 projection = glm::perspective(60.0f, (GLfloat)r.size().first/(GLfloat)r.size().second, 1.0f, 100.0f);
 
-		glm::mat4 anim = glm::rotate(
-			glm::mat4(),
-			(GLfloat)m_state->rotate_i,
-			glm::vec3(1.0f, 0.0f, 1.0f)
-		);
-
 		// Model needs to be centered
 		glm::mat4 model = glm::translate(
-			glm::mat4(),
+			glm::mat4(1.0f),
 			glm::vec3(-0.5f, -0.5f, -0.5f)
 		);
 
-		glm::mat4 view = glm::lookAt(
-			glm::vec3(0.0f, 0.0f, 2.25f),
-			glm::vec3(0.0f, 0.0f, 2.0f),
-			glm::vec3(0.0f, 1.0f, 0.0f)
-		);
-
-		r.mvp = projection * view * anim * model;
-
-		m_state->rotate_i = (m_state->rotate_i + 1) % 360;
+		m_mvp = projection * r.camera.to_matrix() * model;
 	});
 
 	r.add_cb(rcphase::draw, [&](rendercontext& r) {
@@ -315,12 +306,12 @@ nebulascene::nebulascene(rendercontext &r)
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_state->framebuffer);
 		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, m_state->renderbuffer);
 
-		render_backface(r.mvp);
+		render_backface();
 
 		/* Disable renderbuffers */
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
-		raycasting_pass(r.mvp);
+		raycasting_pass();
 
 		//render_buffer_to_screen(r.size().first, r.size().second);
 	});

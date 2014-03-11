@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv)
 {
-	glutcontext r;
+	glfwcontext r;
 	//simplescene s(r); // Context for scene
 	nebulascene s(r);
 

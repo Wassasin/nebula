@@ -3,8 +3,8 @@
 #include <cmath>
 #include <iostream>
 
-#include <GL/glew.h>
-#include <glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "gl.hpp"
 #include "scope_guard.hpp"
@@ -26,16 +26,19 @@ void glfwcontext::run(int, char**)
 	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	/*
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	m_size.first = mode->width;
 	m_size.second = mode->height;
+	*/
 
 	GLFWwindow* window = glfwCreateWindow(size().first, size().second, "Nebula", NULL, NULL);
 	if(window == NULL)
 		throw std::runtime_error("Failed to open GLFW window. GPU not 3.3 compatible.");
 
 	glfwMakeContextCurrent(window);
-	glfwSetCursorPos(window, size().first/2, size().second/2);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+	glfwSetCursorPos(window, m_size.first/2, m_size.second/2);
 	glfwSwapInterval(1);
 
 	glewExperimental = true; // Needed for core profile
@@ -52,8 +55,14 @@ void glfwcontext::run(int, char**)
 	for(const callback_t& f : m_cbs[rcphase::init])
 		f(*this);
 
+	double last_time = glfwGetTime();
 	do
 	{
+		double current_time = glfwGetTime();
+		float delta_time = float(current_time - last_time);
+
+		process_input(delta_time, window);
+
 		for(const callback_t& f : m_cbs[rcphase::update])
 			f(*this);
 
@@ -62,6 +71,8 @@ void glfwcontext::run(int, char**)
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		last_time = current_time;
 	}
 	while(
 		glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
@@ -70,4 +81,41 @@ void glfwcontext::run(int, char**)
 
 	for(const callback_t& f : m_cbs[rcphase::cleanup])
 		f(*this);
+}
+
+void glfwcontext::process_input(float delta, GLFWwindow* window)
+{
+	constexpr float speed = 1.5f;
+	constexpr float mouseSpeed = 0.0005f;
+
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
+	glfwSetCursorPos(window, m_size.first/2, m_size.second/2);
+
+	camera.rotation.x += mouseSpeed * float(m_size.first/2 - xpos);
+	camera.rotation.y += mouseSpeed * float(m_size.second/2 - ypos);
+
+	glm::vec3 direction(
+		glm::cos(camera.rotation.y) * glm::sin(camera.rotation.x),
+		glm::sin(camera.rotation.y),
+		glm::cos(camera.rotation.y) * glm::cos(camera.rotation.x)
+	);
+
+	glm::vec3 right(
+		glm::sin(camera.rotation.x - M_PI/2.0f),
+		0.0f,
+		glm::cos(camera.rotation.x - M_PI/2.0f)
+	);
+
+	if(glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS)
+		camera.position += direction * delta * speed;
+
+	if(glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS)
+		camera.position -= direction * delta * speed;
+
+	if(glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS)
+		camera.position += right * delta * speed;
+
+	if(glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS)
+		camera.position -= right * delta * speed;
 }
