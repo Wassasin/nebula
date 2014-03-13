@@ -45,7 +45,7 @@ GLuint nebulascene::create_volumetexture()
 
 	static constexpr size_t size = SIZE*SIZE*SIZE*4;
 
-	nebulagen<SIZE> generator(2154214789);
+	nebulagen<SIZE> generator(8794891);
 	GLubyte *data = new GLubyte[size];
 
 	auto volume = generator.generate();
@@ -111,13 +111,69 @@ GLuint nebulascene::create_renderbuffer(const size_t width, const size_t height)
 	return renderbuffer;
 }
 
-void nebulascene::render_backface()
+void nebulascene::render_frontface()
 {
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_state->backface_texture, 0);
+	/* Enable renderbuffers */
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_state->framebuffer);
+	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, m_state->renderbuffer);
+
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_state->frontface_texture, 0);
 	gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	const glm::mat4 cube_modelmat = glm::translate(glm::mat4(), m_cube_model);
+
 	m_program_simple.use();
-	m_program_simple.uniform<glm::mat4>("mvp").set(m_mvp);
+	m_program_simple.uniform<glm::mat4>("mvp").set(m_mvp * cube_modelmat);
+
+	gl::enable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
+	gl::enable_vertex_attribute_array(0);
+	m_vb.bind(GL_ARRAY_BUFFER);
+	gl::vertex_attribute_pointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	gl::draw_arrays(GL_QUADS, 0, 4*6);
+	glDisableVertexAttribArray(0);
+
+	gl::disable(GL_CULL_FACE);
+
+	gl::use_program(0);
+
+	/* Disable renderbuffers */
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+}
+
+void nebulascene::raycasting_pass(const rendercontext& r)
+{
+	constexpr GLfloat margin = 0.2f;
+
+	bool inside_volume = (
+		r.camera.position.x >= -0.5f - margin && r.camera.position.x <= 0.5f + margin &&
+		r.camera.position.y >= -0.5f - margin && r.camera.position.y <= 0.5f + margin &&
+		r.camera.position.z >= -0.5f - margin && r.camera.position.z <= 0.5f + margin
+	);
+
+	if(!inside_volume)
+		render_frontface();
+
+	const glm::mat4 cube_modelmat = glm::translate(glm::mat4(), m_cube_model);
+
+	//glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_state->final_texture, 0);
+	gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	m_program_raycast.use();
+
+	gl::active_texture(GL_TEXTURE0 + 0);
+	gl::bind_texture(GL_TEXTURE_2D, m_state->frontface_texture);
+	m_program_raycast.uniform<GLint>("frontface_tex").set(0);
+
+	gl::active_texture(GL_TEXTURE0 + 1);
+	gl::bind_texture(GL_TEXTURE_3D, m_state->volume_texture);
+	m_program_raycast.uniform<GLint>("volume_tex").set(1);
+
+	m_program_raycast.uniform<GLint>("inside_volume").set(inside_volume);
+	m_program_raycast.uniform<glm::mat4>("mvp").set(m_mvp * cube_modelmat);
+	m_program_raycast.uniform<glm::vec3>("camerapos").set(r.camera.position - m_cube_model);
+	m_program_raycast.uniform<GLfloat>("stepsize").set(0.5f/((GLfloat)SIZE));
 
 	gl::enable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
@@ -133,82 +189,14 @@ void nebulascene::render_backface()
 	gl::use_program(0);
 }
 
-void nebulascene::raycasting_pass()
-{
-	//glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_state->final_texture, 0);
-	gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	m_program_raycast.use();
-
-	gl::active_texture(GL_TEXTURE0);
-	gl::bind_texture(GL_TEXTURE_2D, m_state->backface_texture);
-	m_program_raycast.uniform<GLint>("tex").set(0);
-
-	gl::active_texture(GL_TEXTURE0 + 1);
-	gl::bind_texture(GL_TEXTURE_3D, m_state->volume_texture);
-	m_program_raycast.uniform<GLint>("volume_tex").set(1);
-
-	m_program_raycast.uniform<glm::mat4>("mvp").set(m_mvp);
-	m_program_raycast.uniform<GLfloat>("stepsize").set(1.0f/200.0f);
-
-	gl::enable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-
-	gl::enable_vertex_attribute_array(0);
-	m_vb.bind(GL_ARRAY_BUFFER);
-	gl::vertex_attribute_pointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-	gl::draw_arrays(GL_QUADS, 0, 4*6);
-	glDisableVertexAttribArray(0);
-
-	gl::disable(GL_CULL_FACE);
-
-	gl::use_program(0);
-}
-
-void nebulascene::render_buffer_to_screen(const size_t width, const size_t height)
-{
-	gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glLoadIdentity();
-	glEnable(GL_TEXTURE_2D);
-
-	gl::bind_texture(GL_TEXTURE_2D, m_state->final_texture);
-	//gl::bind_texture(GL_TEXTURE_2D, m_state->backface_texture);
-
-	/* Reshape for projection */
-	glViewport(0, 0, width, height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0, 1, 0, 1);
-	glMatrixMode(GL_MODELVIEW);
-
-	/* Draw the texture */
-	glDisable(GL_DEPTH_TEST);
-	glBegin(GL_QUADS);
-
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(0.0f, 0.0f);
-
-	glTexCoord2f(1.0f, 0.0f);
-	glVertex2f(1.0f, 0.0f);
-
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(1.0f, 1.0f);
-
-	glTexCoord2f(0.0f, 1.0f);
-	glVertex2f(0.0f, 1.0f);
-
-	glEnd();
-	glEnable(GL_DEPTH_TEST);
-
-	glDisable(GL_TEXTURE_2D);
-}
-
 nebulascene::nebulascene(rendercontext &r)
 : m_program_simple(false)
 , m_program_raycast(false)
 , m_va(false)
 , m_vb(false)
 , m_state()
+, m_cube_model(-0.5f, -0.5f, -0.5f)
+, m_mvp()
 {
 	r.add_cb(rcphase::init, [&](rendercontext& r) {
 		check_support();
@@ -270,7 +258,7 @@ nebulascene::nebulascene(rendercontext &r)
 		glGenFramebuffersEXT(1, &framebuffer);
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, framebuffer);
 
-		GLuint backface_texture = create_2dtexture(r.size().first, r.size().second);
+		GLuint frontface_texture = create_2dtexture(r.size().first, r.size().second);
 		GLuint final_texture = create_2dtexture(r.size().first, r.size().second);
 
 		GLuint renderbuffer = create_renderbuffer(r.size().first, r.size().second);
@@ -278,40 +266,26 @@ nebulascene::nebulascene(rendercontext &r)
 		m_state.reset({
 			volume_texture,
 			framebuffer,
-			backface_texture,
+			frontface_texture,
 			final_texture,
 			renderbuffer
 		});
 	});
 
 	r.add_cb(rcphase::init, [&](rendercontext& r) {
-		r.camera.position = glm::vec3(0.0f, 0.0f, -2.25f);
+		r.camera.position = glm::vec3(0.0f, 0.0f, -2.0f);
 		r.camera.rotation = glm::vec2(0.0f, 0.0f);
 	});
 
 	r.add_cb(rcphase::update, [&](rendercontext& r) {
-		glm::mat4 projection = glm::perspective(60.0f, (GLfloat)r.size().first/(GLfloat)r.size().second, 1.0f, 100.0f);
-
-		// Model needs to be centered
-		glm::mat4 model = glm::translate(
-			glm::mat4(1.0f),
-			glm::vec3(-0.5f, -0.5f, -0.5f)
-		);
-
-		m_mvp = projection * r.camera.to_matrix() * model;
+		glm::mat4 projection = glm::perspective(60.0f, (GLfloat)r.size().first/(GLfloat)r.size().second, 0.1f, 100.0f);
+		m_mvp = projection * r.camera.to_matrix();
 	});
 
 	r.add_cb(rcphase::draw, [&](rendercontext& r) {
-		/* Enable renderbuffers */
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_state->framebuffer);
-		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, m_state->renderbuffer);
 
-		render_backface();
-
-		/* Disable renderbuffers */
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-		raycasting_pass();
+		//render_frontface();
+		raycasting_pass(r);
 
 		//render_buffer_to_screen(r.size().first, r.size().second);
 	});

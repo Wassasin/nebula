@@ -85,7 +85,7 @@ void glfwcontext::run(int, char**)
 
 void glfwcontext::process_input(float delta, GLFWwindow* window)
 {
-	constexpr float speed = 1.5f;
+	constexpr float speed = 0.5f;
 	constexpr float mouseSpeed = 0.0005f;
 
 	double xpos, ypos;

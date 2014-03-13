@@ -1,9 +1,8 @@
 #version 130
 
-in vec3 color;
+in vec3 fragment_vertex;
 
 void main(void)
 {
-	gl_FragColor = vec4(color, 1.0);
-	//gl_FragColor = vec4(1.0);
+	gl_FragColor = vec4(fragment_vertex, 1.0);
 }

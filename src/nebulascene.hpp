@@ -17,7 +17,7 @@ private:
 
 		GLuint framebuffer;
 
-		GLuint backface_texture;
+		GLuint frontface_texture;
 		GLuint final_texture;
 
 		GLuint renderbuffer;
@@ -28,8 +28,8 @@ private:
 	static GLuint create_2dtexture(const size_t width, const size_t height);
 	static GLuint create_renderbuffer(const size_t width, const size_t height);
 
-	void render_backface();
-	void raycasting_pass();
+	void render_frontface();
+	void raycasting_pass(const rendercontext& r);
 	void render_buffer_to_screen(const size_t width, const size_t height);
 
 	shader_program m_program_simple;
@@ -38,6 +38,8 @@ private:
 	vao m_va;
 	vbo<GLfloat> m_vb;
 	boost::optional<state_t> m_state;
+
+	glm::vec3 m_cube_model;
 	glm::mat4 m_mvp;
 
 public:

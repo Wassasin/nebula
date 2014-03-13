@@ -4,10 +4,10 @@ in vec3 in_vertex;
 
 uniform mat4 mvp;
 
-out vec3 color;
+out vec3 fragment_vertex;
 
 void main(void)
 {
 	gl_Position = mvp * vec4(in_vertex, 1.0);
-	color = in_vertex;
+	fragment_vertex = in_vertex;
 }
