@@ -283,8 +283,6 @@ nebulascene::nebulascene(rendercontext &r)
 	});
 
 	r.add_cb(rcphase::draw, [&](rendercontext& r) {
-
-		//render_frontface();
 		raycasting_pass(r);
 
 		//render_buffer_to_screen(r.size().first, r.size().second);

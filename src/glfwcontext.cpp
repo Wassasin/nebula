@@ -59,7 +59,9 @@ void glfwcontext::run(int, char**)
 	do
 	{
 		double current_time = glfwGetTime();
-		float delta_time = float(current_time - last_time);
+		float delta_time = current_time - last_time;
+		if(delta_time > (1.0f / 70.0f))
+			std::cout << (1.0f / delta_time) << std::endl;
 
 		process_input(delta_time, window);
 

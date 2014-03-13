@@ -2,6 +2,7 @@
 
 #include <GL/gl.h>
 
+#include "simplex.hpp"
 #include "perlin.hpp"
 #include "volume.hpp"
 
@@ -23,24 +24,12 @@ private:
 		return 1.0f / (1.0f + glm::exp(-1.0f * shift * sharpness));
 	}
 
-	static inline GLfloat octave_point(const perlin& p, size_t octaves, glm::vec3 pos)
+	static inline GLfloat sine_point(const simplex& s, glm::vec3 pos, glm::vec3 periods, GLfloat turb_power, size_t turb_size)
 	{
-		GLfloat result = 0.0f;
 
-		for(size_t i = 0; i < octaves; ++i)
-		{
-			result += p.noise(pos) / glm::pow(2.0f, (GLfloat)i+1.0f);
-			pos *= 2.0f;
-		}
-
-		return result;
-	}
-
-	static inline GLfloat sine_point(const perlin& p, glm::vec3 pos, glm::vec3 periods, GLfloat turb_power, size_t turb_size)
-	{
-		GLfloat turb = turb_power * octave_point(p, turb_size, pos);
+		GLfloat turb = turb_power * s.octave_noise(turb_size, 0.25f, 1.0f, pos);
 		GLfloat v = pos.x * periods.x + pos.y * periods.y + pos.z * periods.z + turb;
-		return glm::clamp(glm::sin(v * M_PI), 0.0f, 1.0f);
+		return glm::clamp(glm::sin(v * (GLfloat)M_PI), 0.0f, 1.0f);
 	}
 
 	static inline glm::vec3 downcast(const glm::uvec3 p)
@@ -55,7 +44,7 @@ public:
 
 	volume_t generate()
 	{
-		perlin p(m_seed);
+		simplex s(m_seed);
 
 		volume_t result;
 
@@ -71,8 +60,8 @@ public:
 					v.r = fpos.x;
 					v.g = fpos.y;
 					v.b = fpos.z;
-					//v.a = glm::clamp(exp_curve(octave_point(p, 4, fpos*8.0f), 0.5f, 50.0f), 0.0f, 1.0f);
-					v.a = exp_curve(sine_point(p, fpos*4.0f, glm::vec3(0.2f, 1.0f, 0.2f), 5.0f, 16), 0.5, 10.0f);
+					//v.a = exp_curve(s.octave_noise(16, 0.25, 4.0f, fpos), 0.5f, 20.0f);
+					v.a = exp_curve(sine_point(s, fpos*4.0f, glm::vec3(0.2f, 1.0f, 0.2f), 1.0f, 4), 0.45, 20.0f);
 				}
 
 		return result;

@@ -13,6 +13,9 @@ uniform float stepsize;
 
 void main(void)
 {
+	float particle_density = 0.01;
+	float color_intensity = 2.0;
+
 	vec3 front_vertex = vec3(0, 0, 0);
 	vec4 back_position = mvp * frag_vertex;
 
@@ -39,12 +42,12 @@ void main(void)
 	
 	vec4 color_sample;
 	float alpha_sample;
-	for(int i = 0; i < 1000; ++i)
+	for(int i = 0; i < 400; ++i)
 	{
 		color_sample = texture3D(volume_tex, vec);
-		alpha_sample = color_sample.a * stepsize;
+		alpha_sample = color_sample.a * particle_density;
 		
-		col_acc += (1.0 - alpha_acc) * color_sample * alpha_sample * 3;
+		col_acc += (1.0 - alpha_acc) * color_sample * alpha_sample * color_intensity;
 		alpha_acc += alpha_sample;
 		vec += delta_dir;
 		length_acc += delta_dir_len;
@@ -52,6 +55,6 @@ void main(void)
 		if(length_acc >= len || alpha_acc > 1.0)
 			break; // Terminate if opacity > 1, or the ray is outside the volume
 	}
-	
+
 	gl_FragColor = col_acc;
 }
