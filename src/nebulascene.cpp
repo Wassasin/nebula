@@ -173,7 +173,7 @@ void nebulascene::raycasting_pass(const rendercontext& r)
 	m_program_raycast.uniform<GLint>("inside_volume").set(inside_volume);
 	m_program_raycast.uniform<glm::mat4>("mvp").set(m_mvp * cube_modelmat);
 	m_program_raycast.uniform<glm::vec3>("camerapos").set(r.camera.position - m_cube_model);
-	m_program_raycast.uniform<GLfloat>("stepsize").set(0.5f/((GLfloat)SIZE));
+	m_program_raycast.uniform<GLfloat>("stepsize").set(1.0f/200.0f);
 
 	gl::enable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);

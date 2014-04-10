@@ -95,7 +95,7 @@ void glfwcontext::process_input(float delta, GLFWwindow* window)
 	glfwSetCursorPos(window, m_size.first/2, m_size.second/2);
 
 	camera.rotation.x += mouseSpeed * float(m_size.first/2 - xpos);
-	camera.rotation.y += mouseSpeed * float(m_size.second/2 - ypos);
+	camera.rotation.y = glm::clamp(camera.rotation.y + mouseSpeed * float(m_size.second/2 - ypos), -0.499f * (GLfloat)M_PI, 0.499f * (GLfloat)M_PI);
 
 	glm::vec3 direction(
 		glm::cos(camera.rotation.y) * glm::sin(camera.rotation.x),
