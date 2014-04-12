@@ -11,8 +11,6 @@
 #include "perlin.hpp"
 #include "nebulagen.hpp"
 
-static constexpr size_t SIZE = 128;
-
 void nebulascene::check_support()
 {
 	glewGetExtension("glMultiTexCoord2fvARB");
@@ -43,26 +41,20 @@ GLuint nebulascene::create_volumetexture()
 {
 	GLuint volume_texture;
 
-	static constexpr size_t size = SIZE*SIZE*SIZE*4;
-
-	nebulagen<SIZE> generator(8794891);
+	static constexpr size_t size = nebulagen::SIZE*nebulagen::SIZE*nebulagen::SIZE*4;
 	GLubyte *data = new GLubyte[size];
 
-	auto volume = generator.generate();
-	std::cerr << sizeof(volume) << std::endl;
-
-	for(size_t x = 0; x < SIZE; ++x)
-		for(size_t y = 0; y < SIZE; ++y)
-			for(size_t z = 0; z < SIZE; ++z)
+	for(size_t x = 0; x < nebulagen::SIZE; ++x)
+		for(size_t y = 0; y < nebulagen::SIZE; ++y)
+			for(size_t z = 0; z < nebulagen::SIZE; ++z)
 			{
-				size_t i = x * SIZE * SIZE + y * SIZE + z;
-				glm::uvec3 pos(x, y, z);
-				glm::vec4 v = volume[pos];
+				size_t i = x * nebulagen::SIZE * nebulagen::SIZE + y * nebulagen::SIZE + z;
+				glm::uvec4& v = m_nebula.dust[glm::uvec3(x, y, z)];
 
-				data[i*4+0] = 255 * v.r;
-				data[i*4+1] = 255 * v.g;
-				data[i*4+2] = 255 * v.b;
-				data[i*4+3] = 255 * v.a;
+				data[i*4+0] = v.r;
+				data[i*4+1] = v.g;
+				data[i*4+2] = v.b;
+				data[i*4+3] = v.a;
 			}
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT,1);
@@ -74,7 +66,7 @@ GLuint nebulascene::create_volumetexture()
 	gl::texture_parameter_i(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	gl::texture_parameter_i(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	gl::texture_parameter_i(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-	gl::texture_image_3d(GL_TEXTURE_3D, 0, GL_RGBA, SIZE, SIZE, SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	gl::texture_image_3d(GL_TEXTURE_3D, 0, GL_RGBA, nebulagen::SIZE, nebulagen::SIZE, nebulagen::SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	delete []data;
 	std::cerr << "Volume texture created" << std::endl;
@@ -188,8 +180,28 @@ void nebulascene::raycasting_pass(const rendercontext& r)
 	gl::use_program(0);
 }
 
+void nebulascene::star_pass(const rendercontext& r)
+{
+	const glm::mat4 cube_modelmat = glm::translate(glm::mat4(), m_cube_model);
+
+	glPointSize(5.0);
+	glBegin(GL_POINTS);
+
+	for(const auto& star : m_nebula.stars)
+	{
+		glm::vec4 starpos(star.pos.x, star.pos.y, star.pos.z, 1.0);
+		starpos = (m_mvp * cube_modelmat) * starpos;
+
+		glColor3f(star.color.r/255.0, star.color.g/255.0, star.color.b/255.0);
+		glVertex4f(starpos.x, starpos.y, starpos.z, starpos.w);
+	}
+
+	glEnd();
+}
+
 nebulascene::nebulascene(rendercontext &r)
-: m_program_simple(false)
+: m_nebula(nebulagen(4821903).generate())
+, m_program_simple(false)
 , m_program_raycast(false)
 , m_va(false)
 , m_vb(false)
@@ -272,7 +284,7 @@ nebulascene::nebulascene(rendercontext &r)
 	});
 
 	r.add_cb(rcphase::init, [&](rendercontext& r) {
-		r.camera.position = glm::vec3(0.0f, 0.0f, -0.5f);
+		r.camera.position = glm::vec3(-1.0f, 0.0f, -1.0f);
 		r.camera.rotation = glm::vec2(0.0f, 0.0f);
 	});
 
@@ -283,7 +295,6 @@ nebulascene::nebulascene(rendercontext &r)
 
 	r.add_cb(rcphase::draw, [&](rendercontext& r) {
 		raycasting_pass(r);
-
-		//render_buffer_to_screen(r.size().first, r.size().second);
+		star_pass(r);
 	});
 }

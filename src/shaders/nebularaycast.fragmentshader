@@ -1,8 +1,8 @@
 #version 130
 
-#define stepsize 0.005
+#define stepsize 0.001
 
-#define particle_density 2.0*stepsize
+#define particle_density 4.0*stepsize
 #define color_intensity 2.0
 
 #define color_modifier (particle_density * color_intensity)
@@ -21,16 +21,16 @@ void main(void)
 	vec3 front_vertex = vec3(0, 0, 0);
 
 	if(inside_volume == 1)
-		front_vertex = camerapos;
+		front_vertex = camerapos.zyx; // Mirror
 	else
 	{
 	    vec4 back_position = mvp * frag_vertex;
 		vec2 texc = ((back_position.xy / back_position.w) + 1) * 0.5;
-		front_vertex = texture2D(frontface_tex, texc).xyz;
+		front_vertex = texture2D(frontface_tex, texc).zyx; // Mirror
 	}
 	
 	vec4 front_position = mvp * vec4(front_vertex, 1.0);
-	vec3 dir = frag_vertex.xyz - front_vertex;
+	vec3 dir = frag_vertex.zyx - front_vertex; // Mirror
 	
 	float len = length(dir.xyz);
 	vec3 norm_dir = normalize(dir);

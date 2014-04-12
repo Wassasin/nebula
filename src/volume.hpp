@@ -25,6 +25,11 @@ public:
 		return m_data[pos.x * Y * Z + pos.y * Z + pos.z];
 	}
 
+	const T& operator[](const glm::uvec3& pos) const
+	{
+		return m_data[pos.x * Y * Z + pos.y * Z + pos.z];
+	}
+
 	void operator+=(const T x)
 	{
 		for(size_t i = 0; i < size; ++i)

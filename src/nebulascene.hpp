@@ -8,6 +8,8 @@
 #include "vao.hpp"
 #include "vbo.hpp"
 
+#include "nebulagen.hpp"
+
 class nebulascene
 {
 private:
@@ -24,13 +26,15 @@ private:
 	};
 
 	static void check_support();
-	static GLuint create_volumetexture();
+	GLuint create_volumetexture();
 	static GLuint create_2dtexture(const size_t width, const size_t height);
 	static GLuint create_renderbuffer(const size_t width, const size_t height);
 
 	void render_frontface();
 	void raycasting_pass(const rendercontext& r);
-	void render_buffer_to_screen(const size_t width, const size_t height);
+	void star_pass(const rendercontext& r);
+
+	nebulagen::nebula_t m_nebula;
 
 	shader_program m_program_simple;
 	shader_program m_program_raycast;

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cmath>
+#include <random>
+#include <algorithm>
 #include <array>
 
 // The gradients are the midpoints of the vertices of a cube.
