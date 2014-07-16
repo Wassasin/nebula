@@ -1,13 +1,13 @@
 #include "glfwcontext.hpp"
 #include "glutcontext.hpp"
 #include "simplescene.hpp"
-#include "nebulascene.hpp"
+#include "nebulaparticlescene.hpp"
 
 int main(int argc, char** argv)
 {
 	glfwcontext r;
 	//simplescene s(r); // Context for scene
-	nebulascene s(r);
+	nebulaparticlescene s(r);
 
 	/*r.add_cb(rcphase::draw, [](rendercontext& s) {
 			glLineWidth(2.0);
