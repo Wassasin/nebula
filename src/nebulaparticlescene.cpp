@@ -89,12 +89,12 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 			m_particule_position_size_data[4*i+0] = p.pos.x;
 			m_particule_position_size_data[4*i+1] = p.pos.y;
 			m_particule_position_size_data[4*i+2] = p.pos.z;
-			m_particule_position_size_data[4*i+3] = 0.005f;
+			m_particule_position_size_data[4*i+3] = (p.color.a/255.0f) * 0.01f;
 
 			m_particule_color_data[4*i+0] = p.color.r;
 			m_particule_color_data[4*i+1] = p.color.g;
 			m_particule_color_data[4*i+2] = p.color.b;
-			m_particule_color_data[4*i+3] = p.color.a * 0.01f;
+			m_particule_color_data[4*i+3] = p.color.a * 0.04f;
 
 			i++;
 		}
