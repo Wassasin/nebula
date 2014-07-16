@@ -13,6 +13,13 @@ glfwcontext::glfwcontext()
 : rendercontext()
 {}
 
+std::map<GLFWwindow*, bool> focus_map;
+
+void focus_callback(GLFWwindow* window, int status)
+{
+	focus_map[window] = (status == GL_TRUE);
+}
+
 void glfwcontext::run(int, char**)
 {
 	if(!glfwInit())
@@ -37,6 +44,7 @@ void glfwcontext::run(int, char**)
 		throw std::runtime_error("Failed to open GLFW window. GPU not 3.3 compatible.");
 
 	glfwMakeContextCurrent(window);
+	glfwSetWindowFocusCallback(window, &focus_callback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	glfwSetCursorPos(window, m_size.first/2, m_size.second/2);
 	glfwSwapInterval(1);
@@ -93,6 +101,12 @@ void glfwcontext::process_input(float delta, GLFWwindow* window)
 	double xpos, ypos;
 	glfwGetCursorPos(window, &xpos, &ypos);
 	glfwSetCursorPos(window, m_size.first/2, m_size.second/2);
+
+	{
+		auto focus_it = focus_map.find(window);
+		if(focus_it == focus_map.end() || !focus_it->second)
+			return;
+	}
 
 	camera.rotation.x += mouseSpeed * float(m_size.first/2 - xpos);
 	camera.rotation.y = glm::clamp(camera.rotation.y + mouseSpeed * float(m_size.second/2 - ypos), -0.499f * (GLfloat)M_PI, 0.499f * (GLfloat)M_PI);
