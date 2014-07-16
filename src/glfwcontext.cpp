@@ -33,11 +33,9 @@ void glfwcontext::run(int, char**)
 	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	/*
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	m_size.first = mode->width;
 	m_size.second = mode->height;
-	*/
 
 	GLFWwindow* window = glfwCreateWindow(size().first, size().second, "Nebula", NULL, NULL);
 	if(window == NULL)
