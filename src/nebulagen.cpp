@@ -8,6 +8,13 @@
 constexpr size_t nebulagen::SIZE;
 constexpr GLfloat nebulagen::fX, nebulagen::fY, nebulagen::fZ;
 
+static inline void set_rgb(glm::uvec4& x, const glm::uvec3 color)
+{
+	x.r = color.r;
+	x.g = color.g;
+	x.b = color.b;
+}
+
 static inline GLfloat exp_curve(const GLfloat x, const GLfloat cover, const GLfloat sharpness)
 {
 	GLfloat shift = x - (1.0f - cover);
@@ -119,8 +126,8 @@ void nebulagen::apply_lighting_to_dust(volume<glm::uvec4, X, Y, Z>& nebula_dust,
 			{
 				glm::uvec3 pos(x, y, z);
 
-				glm::vec3 color_tmp = (light_volume[pos] * intensity_multiplier) * downcast(dust_volume[pos].swizzle(glm::R, glm::G, glm::B), 255, 255, 255);
-				nebula_dust[pos].swizzle(glm::R, glm::G, glm::B) = upcast(color_tmp, 255, 255, 255);
+				glm::vec3 color_tmp = (light_volume[pos] * intensity_multiplier) * downcast(dust_volume[pos].rgb(), 255, 255, 255);
+				set_rgb(nebula_dust[pos], upcast(color_tmp, 255, 255, 255));
 				nebula_dust[pos].a = glm::clamp((int)dust_volume[pos].a, 0, 255);
 			}
 }
@@ -225,11 +232,11 @@ nebulagen::nebula_t nebulagen::generate()
 				GLfloat density = absorbant + reflective;
 
 				dust_volume[pos].a = 255 * density;
-				dust_volume[pos].swizzle(glm::R, glm::G, glm::B) = upcast(glm::mix(
-						downcast(brownish, 255, 255, 255),
-						downcast(blackish, 255, 255, 255),
-						absorbant / density
-					), 255, 255, 255);
+				set_rgb(dust_volume[pos], upcast(glm::mix(
+					downcast(brownish, 255, 255, 255),
+					downcast(blackish, 255, 255, 255),
+					absorbant / density
+				), 255, 255, 255));
 			}
 
 	/*for(size_t x = 0; x < X; ++x)

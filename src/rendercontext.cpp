@@ -8,7 +8,7 @@
 
 rendercontext::rendercontext()
 : m_cbs()
-, m_size(1920, 1080)
+, m_size(500, 500)
 , camera({glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)})
 {}
 

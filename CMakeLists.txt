@@ -12,16 +12,21 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/modules"
 
 # Add main project target
 file(GLOB_RECURSE NEBULA_SOURCES src/*.cpp)
+file(GLOB_RECURSE NEBULA_HEADERS src/*.hpp)
+
 add_executable(nebula
 	${NEBULA_SOURCES}
+	${NEBULA_HEADERS}
 )
 
 # Default sane options
 add_definitions("-Wall -Wextra -Weffc++ -std=c++0x -pedantic -g -O3")
 
 # Dependencies
-include_directories(external/glfw/include/GLFW/)
+include_directories(SYSTEM external/glfw/include/GLFW/)
 target_link_libraries(nebula ${GLFW_LIBRARIES} glfw)
+
+include_directories(SYSTEM external/glm/)
 
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIRS})

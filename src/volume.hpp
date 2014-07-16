@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#define GLM_SWIZZLE
 #include <glm/glm.hpp>
 
 template<typename T, size_t X, size_t Y, size_t Z>

@@ -7,7 +7,7 @@
 class nebulagen
 {
 public:
-	static constexpr size_t SIZE = 128;
+	static constexpr size_t SIZE = 64;
 	static constexpr size_t X = SIZE, Y = SIZE, Z = SIZE;
 	static constexpr GLfloat fX = X, fY = Y, fZ = Z;
 
