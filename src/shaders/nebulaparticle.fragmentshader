@@ -1,4 +1,4 @@
-#version 330 core
+#version 130
 
 in vec2 UV;
 in vec4 particlecolor;
@@ -9,7 +9,6 @@ out vec4 color;
 
 void main()
 {
-	// Output color = color of the texture at the specified UV
 //	color = texture2D( textureSampler, UV ) * particlecolor;
     color = particlecolor;
 }
