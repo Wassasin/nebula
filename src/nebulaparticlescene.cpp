@@ -11,7 +11,7 @@
 #include "texture.hpp"
 #include "nebulagen.hpp"
 
-const static size_t MAX_PARTICLE_PER_VOXEL = 8;
+const static size_t MAX_PARTICLE_PER_VOXEL = 20;
 const static size_t MAX_PARTICLE_COUNT = nebulagen::SIZE * nebulagen::SIZE * nebulagen::SIZE * MAX_PARTICLE_PER_VOXEL;
 
 void nebulaparticlescene::check_support()
@@ -48,8 +48,9 @@ void nebulaparticlescene::init_particles()
 	std::poisson_distribution<int> dist(mean);
 
 	const static GLfloat fsize = nebulagen::SIZE;
+	const static GLfloat fmean = mean;
 	const static GLfloat fspread = 4.0f;
-	const static GLfloat frange = mean / fspread;
+	const static GLfloat frange = mean * 2.0f;
 
 	for(size_t x = 0; x < nebulagen::SIZE; ++x)
 		for(size_t y = 0; y < nebulagen::SIZE; ++y)
@@ -59,10 +60,17 @@ void nebulaparticlescene::init_particles()
 				size_t particle_count = v.a / (255 / MAX_PARTICLE_PER_VOXEL);
 
 				for(size_t i = 0; i < particle_count; i++)
+				{
+					GLfloat xdist = dist(engine) * (fspread / fmean) - (fspread - 0.5f);
+					GLfloat ydist = dist(engine) * (fspread / fmean) - (fspread - 0.5f);
+					GLfloat zdist = dist(engine) * (fspread / fmean) - (fspread - 0.5f);
+
 					m_particles.emplace_back(particle_t({
-						glm::vec3((x + dist(engine)/frange)/fsize, (y + dist(engine)/frange)/fsize, (z + dist(engine)/frange)/fsize),
-						v
+						glm::vec3((x + xdist)/fsize, (y + ydist)/fsize, (z + zdist)/fsize),
+						v,
+						-1.0
 					}));
+				}
 			}
 
 	std::cerr << "Instanced " << m_particles.size() << " particles" << std::endl;
@@ -70,10 +78,15 @@ void nebulaparticlescene::init_particles()
 
 void nebulaparticlescene::update_particles(const rendercontext& r)
 {
+	const glm::mat4 cube_modelmat = glm::translate(glm::mat4(), m_cube_model);
+	const glm::mat4 mvp = m_mvp * cube_modelmat;
+
+	for(particle_t& p : m_particles)
+		p.z = (mvp * glm::vec4(p.pos.x, p.pos.y, p.pos.z, 0.0f)).z;
+
 	std::sort(m_particles.begin(), m_particles.end(), [&](const particle_t& a, const particle_t& b)
 	{
-		// Sort in reverse order, far particles are drawn first
-		return glm::distance(r.camera.position, a.pos) > glm::distance(r.camera.position, b.pos);
+		return a.z > b.z;
 	});
 }
 
@@ -89,12 +102,12 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 			m_particule_position_size_data[4*i+0] = p.pos.x;
 			m_particule_position_size_data[4*i+1] = p.pos.y;
 			m_particule_position_size_data[4*i+2] = p.pos.z;
-			m_particule_position_size_data[4*i+3] = (p.color.a/255.0f) * 0.01f;
+			m_particule_position_size_data[4*i+3] = (p.color.a/255.0f) * 0.007f;
 
 			m_particule_color_data[4*i+0] = p.color.r;
 			m_particule_color_data[4*i+1] = p.color.g;
 			m_particule_color_data[4*i+2] = p.color.b;
-			m_particule_color_data[4*i+3] = p.color.a * 0.1f;
+			m_particule_color_data[4*i+3] = p.color.a*0.1f;
 
 			i++;
 		}

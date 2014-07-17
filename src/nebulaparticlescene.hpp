@@ -18,6 +18,7 @@ private:
 	{
 		glm::vec3 pos;
 		glm::uvec4 color;
+		GLfloat z;
 	};
 
 	struct state_t
