@@ -66,16 +66,28 @@ void glfwcontext::run(int, char**)
 	{
 		double current_time = glfwGetTime();
 		float delta_time = current_time - last_time;
-		if(delta_time > (1.0f / 70.0f))
-			std::cout << (1.0f / delta_time) << std::endl;
+		float fps = -1.0;
+		if(delta_time > (1.0f / 62.0f))
+			fps = 1.0f / delta_time;
 
 		process_input(delta_time, window);
+
+		double input_time = glfwGetTime();
 
 		for(const callback_t& f : m_cbs[rcphase::update])
 			f(*this);
 
+		double update_time = glfwGetTime();
+
 		for(const callback_t& f : m_cbs[rcphase::draw])
 			f(*this);
+
+		double draw_time = glfwGetTime();
+
+		std::cout << fps << " FPS\t | "
+				  << (input_time - current_time) << " input\t | "
+				  << (update_time - input_time) << " update\t | "
+				  << (draw_time - input_time) << " draw" << std::endl;
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
