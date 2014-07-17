@@ -205,9 +205,6 @@ nebulaparticlescene::nebulaparticlescene(rendercontext &r)
 
 		gl::clear_color(0.0f, 0.0f, 0.0f, 0.0f);
 
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LESS);
-
 		m_program_particle.attach(shader::from_file(shader_type::vertex, "shaders/nebulaparticle.vertexshader"));
 		m_program_particle.attach(shader::from_file(shader_type::fragment, "shaders/nebulaparticle.fragmentshader"));
 		m_program_particle.link();
