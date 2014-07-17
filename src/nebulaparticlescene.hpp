@@ -25,6 +25,7 @@ private:
 		GLuint billboard_vertex_buffer;
 		GLuint particles_position_buffer;
 		GLuint particles_color_buffer;
+		GLuint particle_texture;
 	};
 
 	static void check_support();

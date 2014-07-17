@@ -43,3 +43,4 @@ target_link_libraries(nebula ${GLEW_LIBRARY})
 # Copy shaders to build dir
 include(MacroAddCopyTarget)
 add_copy_target(nebula-shaders "src/shaders" "shaders")
+add_copy_target(nebula-textures "src/textures" "textures")

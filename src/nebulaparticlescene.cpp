@@ -8,7 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "gl.hpp"
-#include "perlin.hpp"
+#include "texture.hpp"
 #include "nebulagen.hpp"
 
 const static size_t MAX_PARTICLE_PER_VOXEL = 8;
@@ -94,7 +94,7 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 			m_particule_color_data[4*i+0] = p.color.r;
 			m_particule_color_data[4*i+1] = p.color.g;
 			m_particule_color_data[4*i+2] = p.color.b;
-			m_particule_color_data[4*i+3] = p.color.a * 0.04f;
+			m_particule_color_data[4*i+3] = p.color.a * 0.1f;
 
 			i++;
 		}
@@ -112,6 +112,11 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 	gl::blend_function(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	m_program_particle.use();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_state->particle_texture);
+
+	m_program_particle.uniform<GLint>("textureSampler").set(0);
 
 	glm::mat4 vp = r.camera.to_matrix();
 
@@ -199,11 +204,8 @@ nebulaparticlescene::nebulaparticlescene(rendercontext &r)
 		init_particles();
 
 		gl::clear_color(0.0f, 0.0f, 0.0f, 0.0f);
-		//glClearColor(0.3f, 0.0f, 0.0f, 0.0f);
 
-		// Enable depth test
 		glEnable(GL_DEPTH_TEST);
-		// Accept fragment if it closer to the camera than the former one
 		glDepthFunc(GL_LESS);
 
 		m_program_particle.attach(shader::from_file(shader_type::vertex, "shaders/nebulaparticle.vertexshader"));
@@ -240,7 +242,8 @@ nebulaparticlescene::nebulaparticlescene(rendercontext &r)
 		m_state.reset({
 			billboard_vertex_buffer,
 			particles_position_buffer,
-			particles_color_buffer
+			particles_color_buffer,
+			texture::loadDDS("textures/particle.DDS")
 		});
 
 		m_particule_position_size_data.reset(new GLfloat[m_particles.size() * 4]);

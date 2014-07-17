@@ -5,10 +5,10 @@ in vec4 particlecolor;
 
 out vec4 color;
 
-//uniform sampler2D textureSampler;
+uniform sampler2D textureSampler;
 
 void main()
 {
-//	color = texture2D( textureSampler, UV ) * particlecolor;
-    color = particlecolor;
+	color = texture2D( textureSampler, UV ) * particlecolor;
+//    color = particlecolor;
 }
