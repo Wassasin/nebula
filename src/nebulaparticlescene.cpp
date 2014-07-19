@@ -102,12 +102,12 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 			m_particule_position_size_data[4*i+0] = p.pos.x;
 			m_particule_position_size_data[4*i+1] = p.pos.y;
 			m_particule_position_size_data[4*i+2] = p.pos.z;
-			m_particule_position_size_data[4*i+3] = (p.color.a/255.0f) * 0.007f;
+			m_particule_position_size_data[4*i+3] = (p.color.a/255.0f) * 0.004f;
 
 			m_particule_color_data[4*i+0] = p.color.r;
 			m_particule_color_data[4*i+1] = p.color.g;
 			m_particule_color_data[4*i+2] = p.color.b;
-			m_particule_color_data[4*i+3] = p.color.a*0.1f;
+			m_particule_color_data[4*i+3] = p.color.a*0.08f;
 
 			i++;
 		}
@@ -205,8 +205,12 @@ void nebulaparticlescene::star_pass(const rendercontext& r)
 }
 
 nebulaparticlescene::nebulaparticlescene(rendercontext &r)
+: nebulaparticlescene(nebulagen(4821903).generate(), r)
+{}
+
+nebulaparticlescene::nebulaparticlescene(const nebulagen::nebula_t& nebula, rendercontext& r)
 : m_seed(4821903)
-, m_nebula(nebulagen(m_seed).generate())
+, m_nebula(nebula)
 , m_program_particle(false)
 , m_state()
 , m_cube_model(-0.5f, -0.5f, -0.5f)

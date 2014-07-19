@@ -48,4 +48,5 @@ private:
 
 public:
 	nebulascene(rendercontext& r);
+	nebulascene(const nebulagen::nebula_t& nebula, rendercontext& r);
 };

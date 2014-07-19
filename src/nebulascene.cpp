@@ -200,7 +200,11 @@ void nebulascene::star_pass(const rendercontext& r)
 }
 
 nebulascene::nebulascene(rendercontext &r)
-: m_nebula(nebulagen(4821903).generate())
+: nebulascene(nebulagen(4821903).generate(), r)
+{}
+
+nebulascene::nebulascene(const nebulagen::nebula_t& nebula, rendercontext& r)
+: m_nebula(nebula)
 , m_program_simple(false)
 , m_program_raycast(false)
 , m_va(false)

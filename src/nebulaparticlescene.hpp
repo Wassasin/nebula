@@ -54,4 +54,5 @@ private:
 
 public:
 	nebulaparticlescene(rendercontext& r);
+	nebulaparticlescene(const nebulagen::nebula_t& nebula, rendercontext& r);
 };

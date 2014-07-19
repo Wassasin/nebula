@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <msgpack.hpp>
 
 #define GLM_SWIZZLE
 #include <glm/glm.hpp>
@@ -48,4 +49,6 @@ public:
 		for(size_t i = 0; i < size; ++i)
 			m_data[i] /= x;
 	}
+
+    MSGPACK_DEFINE(m_data)
 };

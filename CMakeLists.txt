@@ -43,7 +43,11 @@ target_link_libraries(nebula ${GLEW_LIBRARY})
 
 find_package(msgpack REQUIRED)
 include_directories(${msgpack_INCLUDE_DIRS})
-target_link_libraries(nebula ${msgpack_LIBARIES})
+target_link_libraries(nebula ${msgpack_LIBRARIES})
+
+find_package(Boost COMPONENTS system filesystem program_options iostreams REQUIRED)
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+target_link_libraries(nebula ${Boost_LIBRARIES})
 
 # Copy shaders to build dir
 include(MacroAddCopyTarget)
