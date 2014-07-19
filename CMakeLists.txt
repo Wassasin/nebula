@@ -9,6 +9,7 @@ include_directories("${PROJECT_BINARY_DIR}")
 
 # CMAKE submodules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/external/wubwubcmake/modules")
 
 # Add main project target
 file(GLOB_RECURSE NEBULA_SOURCES src/*.cpp)
@@ -39,6 +40,10 @@ target_link_libraries(nebula ${GLUT_glut_LIBRARY})
 find_package(GLEW REQUIRED)
 include_directories(${GLEW_INCLUDE_DIRS})
 target_link_libraries(nebula ${GLEW_LIBRARY})
+
+find_package(msgpack REQUIRED)
+include_directories(${msgpack_INCLUDE_DIRS})
+target_link_libraries(nebula ${msgpack_LIBARIES})
 
 # Copy shaders to build dir
 include(MacroAddCopyTarget)
