@@ -12,9 +12,6 @@
 
 #include "nebulagen.hpp"
 
-const static size_t MAX_PARTICLE_PER_VOXEL = 10;
-const static size_t MAX_PARTICLE_COUNT = nebulagen::SIZE * nebulagen::SIZE * nebulagen::SIZE * MAX_PARTICLE_PER_VOXEL;
-
 void nebulaparticlescene::check_support()
 {
 	glewGetExtension("glMultiTexCoord2fvARB");
@@ -43,37 +40,7 @@ void nebulaparticlescene::check_support()
 
 void nebulaparticlescene::init_particles()
 {
-	const static int mean = 100;
-
-	std::default_random_engine engine(m_seed+1);
-	std::poisson_distribution<int> dist(mean);
-
-	const static GLfloat fsize = nebulagen::SIZE;
-	const static GLfloat fmean = mean;
-	const static GLfloat fspread = 4.0f;
-	const static GLfloat frange = mean * 2.0f;
-
-	for(size_t x = 0; x < nebulagen::SIZE; ++x)
-		for(size_t y = 0; y < nebulagen::SIZE; ++y)
-			for(size_t z = 0; z < nebulagen::SIZE; ++z)
-			{
-				glm::uvec4& v = m_nebula.dust[glm::uvec3(x, y, z)];
-				size_t particle_count = v.a / (255 / MAX_PARTICLE_PER_VOXEL);
-
-				for(size_t i = 0; i < particle_count; i++)
-				{
-					GLfloat xdist = dist(engine) * (fspread / fmean) - (fspread - 0.5f);
-					GLfloat ydist = dist(engine) * (fspread / fmean) - (fspread - 0.5f);
-					GLfloat zdist = dist(engine) * (fspread / fmean) - (fspread - 0.5f);
-
-					m_particles.emplace_back(particle_t({
-						glm::vec3((x + xdist)/fsize, (y + ydist)/fsize, (z + zdist)/fsize),
-						v,
-						-1.0
-					}));
-				}
-			}
-
+	m_particles = volume_to_particles(m_nebula.dust, m_seed);
 	std::cerr << "Instanced " << m_particles.size() << " particles" << std::endl;
 }
 
