@@ -21,10 +21,7 @@
 #include <vector>
 
 #include "gl.hpp"
-//#include "gl_type_traits.hpp"
 #include "vbo.hpp"
-//#include "../math/matrix.hpp"
-//#include "../math/normalized.hpp"
 
 class vao {
 
@@ -69,38 +66,6 @@ public:
 		gl::enable_vertex_attribute_array(index);
 		gl::vertex_attribute_pointer(index, size, type, normalize_integers, stride, offset);
 	}
-
-	/*template<typename Element, typename Member>
-	void attribute(GLuint a, vbo<Element> const & vbo, Member Element::* member) {
-		using mt = matrix_traits<Member>;
-		using nt = normalized_type_traits<typename mt::element_type>;
-		attribute(
-			a,
-			vbo,
-			mt::size,
-			gl_type_traits<typename nt::raw_type>::gl_constant,
-			nt::is_normalized_type,
-			sizeof(Element),
-			&(static_cast<Element const *>(nullptr)->*member)
-		);
-	}
-
-	template<typename Element>
-	void attribute(GLuint a, vbo<Element> const & vbo) {
-		using mt = matrix_traits<Element>;
-		using nt = normalized_type_traits<typename mt::element_type>;
-		attribute(
-			a,
-			vbo,
-			mt::size,
-			gl_type_traits<typename nt::raw_type>::gl_constant,
-			nt::is_normalized_type,
-			sizeof(Element),
-			nullptr
-		);
-	}*/
-
-	// attribute(...) should not be used on temporary VBOs, since VAOs only store a reference.
 
 	template<typename Element, typename Member>
 	void attribute(GLuint, vbo<Element> &&, Member Element::*);

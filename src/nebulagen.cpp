@@ -177,19 +177,19 @@ void nebulagen::generate_cloud(const glm::vec3 fcenter, const GLfloat size, cons
 			}
 }
 
-nebulagen::nebula_t nebulagen::generate()
+std::vector<star_t> nebulagen::generate_stars()
 {
-	simplex s(m_seed);
-	std::default_random_engine engine(m_seed+1);
-
-	nebula_t result({
+	return {
 		{glm::uvec3(240, 240, 220), glm::vec3(0.8, 0.5, 0.2)},
 		{glm::uvec3(110, 100, 255), glm::vec3(0.3, 0.8, 0.2)},
 		{glm::uvec3(50, 50, 255), glm::vec3(0.2, 0.4, 0.8)}
-	});
+	};
+}
 
-	auto& nebula_dust = result.dust;
-	const auto& nebula_stars = result.stars;
+volume<glm::uvec4, nebulagen::X, nebulagen::Y, nebulagen::Z> nebulagen::generate_dust()
+{
+	simplex s(m_seed);
+	std::default_random_engine engine(m_seed+1);
 
 	static const glm::uvec3 brownish(255, 222, 150);
 	static const glm::uvec3 blackish(10, 1, 1);
@@ -239,24 +239,17 @@ nebulagen::nebula_t nebulagen::generate()
 				), 255, 255, 255));
 			}
 
-	/*for(size_t x = 0; x < X; ++x)
-		for(size_t y = 0; y < Y; ++y)
-			for(size_t z = 0; z < Z; ++z)
-			{
-				glm::uvec3 pos(x, y, z);
-				glm::vec3 fpos = downcast(pos);
+	return dust_volume;
+}
 
-				//uint8_t density = 255 * exp_curve(sine_point(s, fpos*4.0f, glm::vec3(0.2f, 1.0f, 0.2f), 1.0f, 4), 0.45, 20.0f);
-				//uint8_t density = 255 * s.octave_noise(20.0f, 0.25f, 1.0f, fpos);
+nebulagen::nebula_t nebulagen::generate()
+{
+	nebula_t result(generate_stars());
 
-				glm::vec3 tmp = glm::sin(fpos*(GLfloat)M_PI);
-				uint8_t density = 255.0 *
-						exp_curve(glm::clamp((
-							(GLfloat)std::pow(tmp.x * tmp.y * tmp.z, 2.0) +
-							s.octave_noise(10.0f, 0.5f, 1.0f, fpos+glm::vec3(3.0f))
-						), 0.5f, 1.5f)-0.5f, 0.5f, 40.0f);
-				dust_volume[pos] = glm::uvec4(brownish.r, brownish.g, brownish.b, density);
-			}*/
+	auto& nebula_dust = result.dust;
+	const auto& nebula_stars = result.stars;
+
+	volume<glm::uvec4, X, Y, Z> dust_volume(nebulagen::generate_dust());
 
 	std::cerr << "Raycasting stars" << std::endl;
 

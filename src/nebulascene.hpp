@@ -3,10 +3,10 @@
 #include <GL/glew.h>
 #include <boost/optional.hpp>
 
-#include "rendercontext.hpp"
-#include "shader.hpp"
-#include "vao.hpp"
-#include "vbo.hpp"
+#include "gl/rendercontext.hpp"
+#include "gl/shader.hpp"
+#include "gl/vao.hpp"
+#include "gl/vbo.hpp"
 
 #include "nebulagen.hpp"
 

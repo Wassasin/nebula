@@ -4,23 +4,18 @@
 #include <boost/optional.hpp>
 #include <memory>
 
-#include "rendercontext.hpp"
-#include "shader.hpp"
-#include "vao.hpp"
-#include "vbo.hpp"
+#include "gl/rendercontext.hpp"
+#include "gl/shader.hpp"
+#include "gl/vao.hpp"
+#include "gl/vbo.hpp"
 
 #include "nebulagen.hpp"
+
+#include "particle.hpp"
 
 class nebulaparticlescene
 {
 private:
-	struct particle_t
-	{
-		glm::vec3 pos;
-		glm::uvec4 color;
-		GLfloat z;
-	};
-
 	struct state_t
 	{
 		GLuint billboard_vertex_buffer;

@@ -1,7 +1,8 @@
 #include <boost/filesystem.hpp>
 
-#include "glfwcontext.hpp"
-#include "glutcontext.hpp"
+#include "gl/glfwcontext.hpp"
+#include "gl/glutcontext.hpp"
+
 #include "simplescene.hpp"
 #include "nebulascene.hpp"
 #include "nebulaparticlescene.hpp"

@@ -7,7 +7,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "gl.hpp"
-#include "scope_guard.hpp"
+
+#include "../util/scope_guard.hpp"
 
 glfwcontext::glfwcontext()
 : rendercontext()

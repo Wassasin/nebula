@@ -3,8 +3,7 @@
 #include <vector>
 #include <msgpack.hpp>
 
-#define GLM_SWIZZLE
-#include <glm/glm.hpp>
+#include "util/glm_include.hpp"
 
 template<typename T, size_t X, size_t Y, size_t Z>
 class volume

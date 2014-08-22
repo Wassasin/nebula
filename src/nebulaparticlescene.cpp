@@ -7,11 +7,12 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "gl.hpp"
-#include "texture.hpp"
+#include "gl/gl.hpp"
+#include "gl/texture.hpp"
+
 #include "nebulagen.hpp"
 
-const static size_t MAX_PARTICLE_PER_VOXEL = 20;
+const static size_t MAX_PARTICLE_PER_VOXEL = 10;
 const static size_t MAX_PARTICLE_COUNT = nebulagen::SIZE * nebulagen::SIZE * nebulagen::SIZE * MAX_PARTICLE_PER_VOXEL;
 
 void nebulaparticlescene::check_support()
