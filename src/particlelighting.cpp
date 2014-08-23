@@ -69,6 +69,7 @@ template<size_t LAYERS>
 size_t line_to_index(const glm::vec3 orig, const glm::vec3 targ)
 {
 	glm::vec3 dir = glm::normalize(targ - orig);
+	glm::vec3 zero;
 
 	for(size_t i = 0; i < 20; i++)
 	{
@@ -79,8 +80,8 @@ size_t line_to_index(const glm::vec3 orig, const glm::vec3 targ)
 		};
 
 		glm::vec3 bary_pos;
-		if(glm::intersectRayTriangle(orig, dir, t.a, t.b, t.c, bary_pos))
-			return find_tri<LAYERS>(orig, dir, t, i);
+		if(glm::intersectRayTriangle(zero, dir, t.a, t.b, t.c, bary_pos))
+			return find_tri<LAYERS>(zero, dir, t, i);
 	}
 
 	assert(false);
