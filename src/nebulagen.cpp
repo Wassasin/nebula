@@ -8,13 +8,6 @@
 constexpr size_t nebulagen::SIZE;
 constexpr GLfloat nebulagen::fX, nebulagen::fY, nebulagen::fZ;
 
-static inline void set_rgb(glm::uvec4& x, const glm::uvec3 color)
-{
-	x.r = color.r;
-	x.g = color.g;
-	x.b = color.b;
-}
-
 static inline GLfloat exp_curve(const GLfloat x, const GLfloat cover, const GLfloat sharpness)
 {
 	GLfloat shift = x - (1.0f - cover);

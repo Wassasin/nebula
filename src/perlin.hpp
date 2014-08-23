@@ -5,7 +5,6 @@
 #include <random>
 #include <algorithm>
 
-#include <GL/gl.h>
 #include <glm/glm.hpp>
 
 class perlin {

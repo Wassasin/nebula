@@ -2,6 +2,7 @@
 
 #include <msgpack.hpp>
 
+#include "../gl/gl.hpp"
 #include "glm_include.hpp"
 
 namespace msgpack {

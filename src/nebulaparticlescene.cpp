@@ -11,6 +11,7 @@
 #include "gl/texture.hpp"
 
 #include "nebulagen.hpp"
+#include "particlelighting.hpp"
 
 void nebulaparticlescene::check_support()
 {

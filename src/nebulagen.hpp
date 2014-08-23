@@ -1,7 +1,5 @@
 #pragma once
 
-#include <GL/gl.h>
-
 #include "nebula.hpp"
 #include "volume.hpp"
 #include "star.hpp"

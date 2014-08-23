@@ -9,6 +9,13 @@
 
 #include "util/glm_msgpack.hpp"
 
+static inline void set_rgb(glm::uvec4& x, const glm::uvec3 color)
+{
+	x.r = color.r;
+	x.g = color.g;
+	x.b = color.b;
+}
+
 template<size_t X, size_t Y, size_t Z>
 struct volume_nebula_t
 {

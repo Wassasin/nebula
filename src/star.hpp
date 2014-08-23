@@ -1,7 +1,5 @@
 #pragma once
 
-#include <msgpack.hpp>
-
 #include "util/glm_msgpack.hpp"
 
 struct star_t
