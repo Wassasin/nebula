@@ -37,6 +37,11 @@ struct particle_nebula_t
 	: particles()
 	, stars(_stars)
 	{}
+
+	particle_nebula_t(const std::vector<particle_t> _particles, const std::vector<star_t>& _stars)
+	: particles(_particles)
+	, stars(_stars)
+	{}
 };
 
 const static size_t MAX_PARTICLE_PER_VOXEL = 10;

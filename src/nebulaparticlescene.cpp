@@ -39,21 +39,15 @@ void nebulaparticlescene::check_support()
 		throw std::runtime_error("Driver does not support OpenGL Shading Language");
 }
 
-void nebulaparticlescene::init_particles()
-{
-	m_particles = volume_to_particles(m_nebula.dust, m_seed);
-	std::cerr << "Instanced " << m_particles.size() << " particles" << std::endl;
-}
-
 void nebulaparticlescene::update_particles(const rendercontext& r)
 {
 	const glm::mat4 cube_modelmat = glm::translate(glm::mat4(), m_cube_model);
 	const glm::mat4 mvp = m_mvp * cube_modelmat;
 
-	for(particle_t& p : m_particles)
+	for(particle_t& p : m_nebula.particles)
 		p.z = (mvp * glm::vec4(p.pos.x, p.pos.y, p.pos.z, 0.0f)).z;
 
-	std::sort(m_particles.begin(), m_particles.end(), [&](const particle_t& a, const particle_t& b)
+	std::sort(m_nebula.particles.begin(), m_nebula.particles.end(), [&](const particle_t& a, const particle_t& b)
 	{
 		return a.z > b.z;
 	});
@@ -66,7 +60,7 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 	{
 		size_t i = 0;
 
-		for(const particle_t& p : m_particles)
+		for(const particle_t& p : m_nebula.particles)
 		{
 			m_particule_position_size_data[4*i+0] = p.pos.x;
 			m_particule_position_size_data[4*i+1] = p.pos.y;
@@ -83,12 +77,12 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 	}
 
 	gl::bind_buffer(GL_ARRAY_BUFFER, m_state->particles_position_buffer);
-	glBufferData(GL_ARRAY_BUFFER, m_particles.size() * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning
-	glBufferSubData(GL_ARRAY_BUFFER, 0, m_particles.size() * sizeof(GLfloat) * 4, m_particule_position_size_data.get());
+	glBufferData(GL_ARRAY_BUFFER, m_nebula.particles.size() * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning
+	glBufferSubData(GL_ARRAY_BUFFER, 0, m_nebula.particles.size() * sizeof(GLfloat) * 4, m_particule_position_size_data.get());
 
 	gl::bind_buffer(GL_ARRAY_BUFFER, m_state->particles_color_buffer);
-	glBufferData(GL_ARRAY_BUFFER, m_particles.size() * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning
-	glBufferSubData(GL_ARRAY_BUFFER, 0, m_particles.size() * sizeof(GLubyte) * 4, m_particule_color_data.get());
+	glBufferData(GL_ARRAY_BUFFER, m_nebula.particles.size() * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning
+	glBufferSubData(GL_ARRAY_BUFFER, 0, m_nebula.particles.size() * sizeof(GLubyte) * 4, m_particule_color_data.get());
 
 	gl::enable(GL_BLEND);
 	gl::blend_function(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -143,7 +137,7 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 	glVertexAttribDivisor(1, 1); // positions : one per quad (its center) -> 1
 	glVertexAttribDivisor(2, 1); // color : one per quad -> 1
 
-	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, m_particles.size());
+	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, m_nebula.particles.size());
 
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
@@ -173,13 +167,8 @@ void nebulaparticlescene::star_pass(const rendercontext& r)
 	glEnd();
 }
 
-nebulaparticlescene::nebulaparticlescene(rendercontext &r)
-: nebulaparticlescene(nebulagen(4821903).generate(), r)
-{}
-
-nebulaparticlescene::nebulaparticlescene(const nebulagen::nebula_t& nebula, rendercontext& r)
-: m_seed(4821903)
-, m_nebula(nebula)
+nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, rendercontext& r)
+: m_nebula(nebula)
 , m_program_particle(false)
 , m_state()
 , m_cube_model(-0.5f, -0.5f, -0.5f)
@@ -187,7 +176,6 @@ nebulaparticlescene::nebulaparticlescene(const nebulagen::nebula_t& nebula, rend
 {
 	r.add_cb(rcphase::init, [&](rendercontext& r) {
 		check_support();
-		init_particles();
 
 		gl::clear_color(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -212,7 +200,7 @@ nebulaparticlescene::nebulaparticlescene(const nebulagen::nebula_t& nebula, rend
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 
 		// Initialize with empty (NULL) buffer : it will be updated later, each frame.
-		glBufferData(GL_ARRAY_BUFFER, m_particles.size() * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, m_nebula.particles.size() * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
 
 		// The VBO containing the colors of the particles
 		GLuint particles_color_buffer;
@@ -220,7 +208,7 @@ nebulaparticlescene::nebulaparticlescene(const nebulagen::nebula_t& nebula, rend
 		glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
 
 		// Initialize with empty (NULL) buffer : it will be updated later, each frame.
-		glBufferData(GL_ARRAY_BUFFER, m_particles.size() * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, m_nebula.particles.size() * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
 
 		m_state.reset({
 			billboard_vertex_buffer,
@@ -229,8 +217,8 @@ nebulaparticlescene::nebulaparticlescene(const nebulagen::nebula_t& nebula, rend
 			texture::loadDDS("textures/particle.DDS")
 		});
 
-		m_particule_position_size_data.reset(new GLfloat[m_particles.size() * 4]);
-		m_particule_color_data.reset(new GLubyte[m_particles.size() * 4]);
+		m_particule_position_size_data.reset(new GLfloat[m_nebula.particles.size() * 4]);
+		m_particule_color_data.reset(new GLubyte[m_nebula.particles.size() * 4]);
 	});
 
 	r.add_cb(rcphase::init, [&](rendercontext& r) {

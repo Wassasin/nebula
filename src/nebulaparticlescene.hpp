@@ -1,6 +1,5 @@
 #pragma once
 
-#include <GL/glew.h>
 #include <boost/optional.hpp>
 #include <memory>
 
@@ -9,9 +8,7 @@
 #include "gl/vao.hpp"
 #include "gl/vbo.hpp"
 
-#include "nebulagen.hpp"
-
-#include "particle.hpp"
+#include "nebula.hpp"
 
 class nebulaparticlescene
 {
@@ -25,15 +22,12 @@ private:
 	};
 
 	static void check_support();
-	void init_particles();
 	void update_particles(const rendercontext& r);
 
 	void particle_pass(const rendercontext& r);
 	void star_pass(const rendercontext& r);
 
-	int m_seed;
-	nebulagen::nebula_t m_nebula;
-	std::vector<particle_t> m_particles;
+	particle_nebula_t m_nebula;
 
 	shader_program m_program_particle;
 
@@ -48,6 +42,5 @@ private:
 	std::unique_ptr<GLubyte[]> m_particule_color_data;
 
 public:
-	nebulaparticlescene(rendercontext& r);
-	nebulaparticlescene(const nebulagen::nebula_t& nebula, rendercontext& r);
+	nebulaparticlescene(const particle_nebula_t& nebula, rendercontext& r);
 };

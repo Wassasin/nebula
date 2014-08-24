@@ -48,11 +48,13 @@ nebulagen::nebula_t init_nebula(const std::string filename, const size_t seed)
 
 int main(int argc, char** argv)
 {
-	nebulagen::nebula_t nebula = init_nebula("nebula.msgpack.gz", 4821903);
+	constexpr int seed = 4821903;
+	nebulagen::nebula_t nebula = init_nebula("nebula.msgpack.gz", seed);
 
 	glfwcontext r;
 	//nebulascene s(nebula, r);
-	nebulaparticlescene s(nebula, r);
+	particle_nebula_t pnebula(volume_to_particles(nebula.dust, seed), nebula.stars);
+	nebulaparticlescene s(pnebula, r);
 
 	r.run(argc, argv);
 }
