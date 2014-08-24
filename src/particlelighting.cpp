@@ -1,20 +1,10 @@
 #include "particlelighting.hpp"
 
 #include "util/glm_include.hpp"
+#include "util/glm_opts.hpp"
 #include <glm/gtx/intersect.hpp>
 
 #include "tri.hpp"
-
-static inline glm::vec3 downcast(const glm::uvec3 p)
-{
-	return glm::vec3((GLfloat)p.x / 255, (GLfloat)p.y / 255, (GLfloat)p.z / 255);
-}
-
-static inline glm::uvec3 upcast(const glm::vec3 p)
-{
-	glm::vec3 tmp = glm::round(p * glm::vec3(255, 255, 255));
-	return glm::clamp(glm::uvec3(tmp.x, tmp.y, tmp.z), glm::uvec3(0), glm::uvec3(255));
-}
 
 static constexpr GLfloat _A = 0.525731112119133606f;
 static constexpr GLfloat _B = 0.850650808352039932f;
@@ -94,7 +84,7 @@ void particlelighting::apply_lighting(particle_nebula_t& n)
 
 	std::cout << "Using " << tri_count << " tris for particle lighting computation" << std::endl;
 
-	for(star_t& s : n.stars)
+	for(const star_t& s : n.stars)
 	{
 		// Light left per tri
 		std::vector<GLfloat> tris_lighting(tri_count, 1.0f);
