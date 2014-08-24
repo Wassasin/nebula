@@ -1,7 +1,7 @@
 #include "particlelighting.hpp"
 
-#include "util/glm_include.hpp"
-#include "util/glm_opts.hpp"
+#include "gl/glm_include.hpp"
+#include "gl/glm_opts.hpp"
 #include <glm/gtx/intersect.hpp>
 
 #include "tri.hpp"

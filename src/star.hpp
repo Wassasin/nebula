@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/glm_msgpack.hpp"
+#include "gl/glm_msgpack.hpp"
 
 struct star_t
 {

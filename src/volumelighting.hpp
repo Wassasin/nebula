@@ -4,6 +4,8 @@
 
 #include "nebula.hpp"
 
+#include "gl/glm_opts.hpp"
+
 template<size_t X, size_t Y, size_t Z>
 class volumelighting
 {

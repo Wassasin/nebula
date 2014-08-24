@@ -4,9 +4,7 @@
 #include <cstdint>
 
 #include "simplex.hpp"
-#include "util/glm_opts.hpp"
-
-#include "volumelighting.hpp"
+#include "gl/glm_opts.hpp"
 
 constexpr size_t nebulagen::SIZE;
 constexpr GLfloat nebulagen::fX, nebulagen::fY, nebulagen::fZ;
@@ -135,10 +133,5 @@ volume<glm::uvec4, nebulagen::X, nebulagen::Y, nebulagen::Z> nebulagen::generate
 
 nebulagen::nebula_t nebulagen::generate()
 {
-	nebula_t result(generate_stars());	
-	result.dust = nebulagen::generate_dust();
-
-	volumelighting<X, Y, Z>::apply_lighting(result);
-
-	return result;
+	return nebula_t(generate_dust(), generate_stars());
 }

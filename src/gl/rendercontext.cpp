@@ -2,7 +2,8 @@
 
 #include <iostream>
 
-#include <GL/gl.h>
+#include "gl.hpp"
+
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 

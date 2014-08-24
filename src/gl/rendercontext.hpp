@@ -4,8 +4,7 @@
 #include <map>
 #include <functional>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
+#include "glm_include.hpp"
 
 enum class rcphase {
 	init,

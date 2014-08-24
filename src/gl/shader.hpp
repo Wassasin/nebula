@@ -22,9 +22,8 @@
 #include <stdexcept>
 #include <fstream>
 
-#include <glm/glm.hpp>
-
 #include "gl.hpp"
+#include "glm_include.hpp"
 
 enum class shader_type : GLenum {
 	vertex = GL_VERTEX_SHADER,

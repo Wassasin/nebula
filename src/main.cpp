@@ -3,6 +3,9 @@
 #include "gl/glfwcontext.hpp"
 #include "gl/glutcontext.hpp"
 
+#include "nebulagen.hpp"
+#include "volumelighting.hpp"
+
 #include "simplescene.hpp"
 #include "nebulascene.hpp"
 #include "nebulaparticlescene.hpp"
@@ -41,6 +44,8 @@ nebulagen::nebula_t init_nebula(const std::string filename, const size_t seed)
 		MsgpackWriter<nebulagen::nebula_t> writer(filename);
 
 		nebulagen::nebula_t result = gen.generate();
+		volumelighting<nebulagen::X, nebulagen::Y, nebulagen::Z>::apply_lighting(result);
+
 		writer.write(result);
 		return result;
 	}

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/glm_include.hpp"
+#include "gl/glm_include.hpp"
 
 struct tri
 {

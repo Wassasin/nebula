@@ -7,7 +7,7 @@
 #include "star.hpp"
 #include "particle.hpp"
 
-#include "util/glm_msgpack.hpp"
+#include "gl/glm_msgpack.hpp"
 
 template<size_t X, size_t Y, size_t Z>
 struct volume_nebula_t
@@ -22,6 +22,11 @@ struct volume_nebula_t
 
 	volume_nebula_t(const std::vector<star_t>& _stars)
 	: dust()
+	, stars(_stars)
+	{}
+
+	volume_nebula_t(const volume<glm::uvec4, X, Y, Z>& _dust, const std::vector<star_t>& _stars)
+	: dust(_dust)
 	, stars(_stars)
 	{}
 

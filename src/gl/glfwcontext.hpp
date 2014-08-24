@@ -1,6 +1,7 @@
 #pragma once
 
-#include <GL/glew.h>
+#include "gl.hpp"
+
 #include <glfw3.h>
 
 #include "rendercontext.hpp"

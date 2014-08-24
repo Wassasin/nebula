@@ -3,7 +3,7 @@
 #include <vector>
 #include <msgpack.hpp>
 
-#include "util/glm_include.hpp"
+#include "gl/glm_include.hpp"
 
 template<typename T, size_t X, size_t Y, size_t Z>
 class volume
