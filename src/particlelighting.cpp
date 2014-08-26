@@ -79,7 +79,7 @@ size_t line_to_index(const glm::vec3 orig, const glm::vec3 targ)
 
 void particlelighting::apply_lighting(particle_nebula_t& n)
 {
-	static constexpr size_t LAYERS = 2;
+	static constexpr size_t LAYERS = 5;
 	static const size_t tri_count = 20*std::pow(4, LAYERS);
 
 	std::cout << "Using " << tri_count << " tris for particle lighting computation" << std::endl;
@@ -95,7 +95,7 @@ void particlelighting::apply_lighting(particle_nebula_t& n)
 
 		std::sort(n.particles.begin(), n.particles.end(), [&](const particle_t& a, const particle_t& b)
 		{
-			return a.z > b.z;
+			return a.z < b.z;
 		});
 
 		for(particle_t& p : n.particles)

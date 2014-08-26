@@ -38,6 +38,11 @@ struct particle_nebula_t
 	std::vector<particle_t> particles;
 	std::vector<star_t> stars;
 
+	particle_nebula_t()
+	: particles()
+	, stars()
+	{}
+
 	particle_nebula_t(const std::vector<star_t>& _stars)
 	: particles()
 	, stars(_stars)
@@ -47,6 +52,8 @@ struct particle_nebula_t
 	: particles(_particles)
 	, stars(_stars)
 	{}
+
+	MSGPACK_DEFINE(particles, stars)
 };
 
 const static size_t MAX_PARTICLE_PER_VOXEL = 10;
