@@ -234,8 +234,6 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 	});
 
 	r.add_cb(rcphase::draw, [&](rendercontext& r) {
-		gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		particle_pass(r);
 		star_pass(r);
 	});

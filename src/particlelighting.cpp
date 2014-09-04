@@ -1,5 +1,8 @@
 #include "particlelighting.hpp"
 
+#include <numeric>
+
+#include "gl/gl.hpp"
 #include "gl/glm_include.hpp"
 #include "gl/glm_opts.hpp"
 #include <glm/gtx/intersect.hpp>
@@ -27,9 +30,9 @@ static const glm::vec3 icosa_verts[12] =
 template<size_t LAYER>
 inline size_t find_tri(glm::vec3 orig, glm::vec3 dir, tri t, size_t index)
 {
-	glm::vec3 ab = glm::normalize(t.a + t.b / 2.0f);
-	glm::vec3 ac = glm::normalize(t.a + t.c / 2.0f);
-	glm::vec3 bc = glm::normalize(t.b + t.c / 2.0f);
+	glm::vec3 ab = glm::normalize((t.a + t.b) / 2.0f);
+	glm::vec3 ac = glm::normalize((t.a + t.c) / 2.0f);
+	glm::vec3 bc = glm::normalize((t.b + t.c) / 2.0f);
 
 	tri subdiv_tris[4] = {
 		{t.a, ab, ac},
@@ -42,7 +45,7 @@ inline size_t find_tri(glm::vec3 orig, glm::vec3 dir, tri t, size_t index)
 	{
 		const tri& t2 = subdiv_tris[i];
 		glm::vec3 bary_pos;
-		if(glm::intersectRayTriangle(orig, dir, t2.a, t2.b, t2.c, bary_pos))
+		if(glm::intersectRayTriangle(orig, dir, t2.a, t2.c, t2.b, bary_pos))
 			return find_tri<LAYER-1>(orig, dir, t2, index*4+i);
 	}
 
@@ -59,7 +62,7 @@ template<size_t LAYERS>
 size_t line_to_index(const glm::vec3 orig, const glm::vec3 targ)
 {
 	glm::vec3 dir = glm::normalize(targ - orig);
-	glm::vec3 zero;
+	glm::vec3 zero(0.0, 0.0, 0.0);
 
 	for(size_t i = 0; i < 20; i++)
 	{
@@ -70,20 +73,51 @@ size_t line_to_index(const glm::vec3 orig, const glm::vec3 targ)
 		};
 
 		glm::vec3 bary_pos;
-		if(glm::intersectRayTriangle(zero, dir, t.a, t.b, t.c, bary_pos))
+		if(glm::intersectRayTriangle(zero, dir, t.a, t.c, t.b, bary_pos))
 			return find_tri<LAYERS>(zero, dir, t, i);
 	}
 
 	assert(false);
 }
 
+template<size_t LAYER>
+inline void draw_tris(tri t)
+{
+	glm::vec3 ab = glm::normalize((t.a + t.b) / 2.0f);
+	glm::vec3 ac = glm::normalize((t.a + t.c) / 2.0f);
+	glm::vec3 bc = glm::normalize((t.b + t.c) / 2.0f);
+
+	tri subdiv_tris[4] = {
+		{t.a, ab, ac},
+		{t.b, bc, ab},
+		{t.c, ac, bc},
+		{ab, bc, ac}
+	};
+
+	for(size_t i = 0; i < 4; i++)
+		draw_tris<LAYER-1>(subdiv_tris[i]);
+}
+
+template<>
+inline void draw_tris<0>(tri t)
+{
+	glColor3f(t.a.x, t.b.y, t.c.z);
+	glVertex3f(t.a.x, t.a.y, t.a.z);
+	glVertex3f(t.b.x, t.b.y, t.b.z);
+	glVertex3f(t.c.x, t.c.y, t.c.z);
+}
+
 void particlelighting::apply_lighting(particle_nebula_t& n)
 {
-	static constexpr size_t LAYERS = 5;
+	static constexpr size_t LAYERS = 2;
 	static const size_t tri_count = 20*std::pow(4, LAYERS);
 
 	std::cout << "Using " << tri_count << " tris for particle lighting computation" << std::endl;
 
+	std::vector<size_t> tmp_index(n.particles.size());
+	std::iota(tmp_index.begin(), tmp_index.end(), 0);
+
+	std::vector<glm::vec3> light(n.particles.size());
 	for(const star_t& s : n.stars)
 	{
 		// Light left per tri
@@ -93,17 +127,38 @@ void particlelighting::apply_lighting(particle_nebula_t& n)
 		for(particle_t& p : n.particles)
 			p.z = glm::distance(s.pos, p.pos);
 
-		std::sort(n.particles.begin(), n.particles.end(), [&](const particle_t& a, const particle_t& b)
+		std::sort(tmp_index.begin(), tmp_index.end(), [&](const size_t a, const size_t b)
 		{
-			return a.z < b.z;
+			return n.particles[a].z < n.particles[b].z;
 		});
 
-		for(particle_t& p : n.particles)
+		for(size_t i : tmp_index)
 		{
-			size_t i = line_to_index<LAYERS>(s.pos, p.pos);
-
-			set_rgb(p.color, upcast((downcast(s.color) * tris_lighting[i]) * downcast(p.color.rgb())));
-			tris_lighting[i] *= 0.9f;
+			size_t j = line_to_index<LAYERS>(s.pos, n.particles[i].pos);
+			light[i] += downcast(s.color) * tris_lighting[j];
+			tris_lighting[j] *= 0.9995f;
 		}
+
+		for(GLfloat l : tris_lighting)
+			std::cout << l << std::endl;
 	}
+
+	for(size_t i = 0; i < n.particles.size(); i++)
+		set_rgb(n.particles[i].color, upcast(downcast(n.particles[i].color.rgb()) * light[i]));
+}
+
+void particlelighting::draw_debug()
+{
+	glBegin(GL_TRIANGLES);
+	for(size_t i = 0; i < 20; i++)
+	{
+		const tri t = {
+			icosa_verts[icosa_indices[i][0]],
+			icosa_verts[icosa_indices[i][1]],
+			icosa_verts[icosa_indices[i][2]],
+		};
+
+		draw_tris<3>(t);
+	}
+	glEnd();
 }

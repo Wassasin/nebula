@@ -11,4 +11,5 @@ private:
 
 public:
 	static void apply_lighting(particle_nebula_t&);
+	static void draw_debug();
 };

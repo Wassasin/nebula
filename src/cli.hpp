@@ -157,6 +157,35 @@ class cli
 			auto particles = acquire_particles(opt);
 
 			RENDERER r;
+			r.add_cb(rcphase::draw, [&](rendercontext& r) {
+				gl::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			});
+
+			/*r.add_cb(rcphase::draw, [&](rendercontext& r) {
+				glm::vec3 model = particles.stars[0].pos + glm::vec3(-0.5f, -0.5f, -0.5f);
+
+				glm::mat4 projection = glm::perspective(60.0f, (GLfloat)r.size().first/(GLfloat)r.size().second, 0.1f, 100.0f);
+				glm::mat4 modelmat = glm::translate(glm::mat4(), model);
+				glm::mat4 mat = projection * r.camera.to_matrix() * modelmat;
+
+				glPushMatrix();
+				glLoadMatrixf((GLfloat*)&mat);
+
+				particlelighting::draw_debug();
+
+				glBegin(GL_LINES);
+				glColor3f(1.0f, 1.0f, 1.0f);
+				glm::vec3 orig;
+				glm::vec3 dir(-0.979421, 0.19943, -0.0310227);
+				glm::vec3 dest = orig + dir;
+
+				glVertex3f(orig.x, orig.y, orig.z);
+				glVertex3f(dest.x, dest.y, dest.z);
+				glEnd();
+
+				glPopMatrix();
+			});*/
+
 			nebulaparticlescene s(particles, r);
 			r.run(argc, argv);
 			return 0;
