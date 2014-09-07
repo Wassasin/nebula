@@ -56,7 +56,7 @@ struct particle_nebula_t
 	MSGPACK_DEFINE(particles, stars)
 };
 
-const static size_t MAX_PARTICLE_PER_VOXEL = 10;
+const static size_t MAX_PARTICLE_PER_VOXEL = 20;
 
 template<size_t X, size_t Y, size_t Z>
 std::vector<particle_t> volume_to_particles(const volume<glm::uvec4, X, Y, Z>& dust, int seed)

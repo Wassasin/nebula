@@ -70,7 +70,7 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 			m_particule_color_data[4*i+0] = p.color.r;
 			m_particule_color_data[4*i+1] = p.color.g;
 			m_particule_color_data[4*i+2] = p.color.b;
-			m_particule_color_data[4*i+3] = p.color.a*0.08f;
+			m_particule_color_data[4*i+3] = p.color.a * 0.5f;
 
 			i++;
 		}
@@ -167,6 +167,35 @@ void nebulaparticlescene::star_pass(const rendercontext& r)
 	glEnd();
 }
 
+GLuint create_texture()
+{
+	static constexpr size_t size = 1024;
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	GLubyte data[size][size][4];
+	for(size_t x = 0; x < size; ++x)
+		for(size_t y = 0; y < size; ++y)
+		{
+			GLfloat dist = glm::clamp(glm::distance(glm::vec2(0.5f, 0.5f), glm::vec2(x, y)/(GLfloat)size)*2.0f, 0.0f, 1.0f);
+			data[x][y][0] = 255;
+			data[x][y][1] = 255;
+			data[x][y][2] = 255;
+			data[x][y][3] = glm::clamp(255.0f * 64.0f * (1.0f - std::pow(dist, 0.01f)), 0.0f, 255.0f);
+		}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	return textureID;
+}
+
 nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, rendercontext& r)
 : m_nebula(nebula)
 , m_program_particle(false)
@@ -214,7 +243,8 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 			billboard_vertex_buffer,
 			particles_position_buffer,
 			particles_color_buffer,
-			texture::loadDDS("textures/particle.DDS")
+			//texture::loadDDS("textures/particle.DDS")
+			create_texture()
 		});
 
 		m_particule_position_size_data.reset(new GLfloat[m_nebula.particles.size() * 4]);
@@ -227,7 +257,7 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 	});
 
 	r.add_cb(rcphase::update, [&](rendercontext& r) {
-		glm::mat4 projection = glm::perspective(60.0f, (GLfloat)r.size().first/(GLfloat)r.size().second, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(60.0f, (GLfloat)r.size().first/(GLfloat)r.size().second, 0.01f, 100.0f);
 		m_mvp = projection * r.camera.to_matrix();
 
 		update_particles(r);

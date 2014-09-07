@@ -111,9 +111,9 @@ inline void draw_tris<0>(tri t)
 
 void particlelighting::apply_lighting(particle_nebula_t& n)
 {
-	static constexpr size_t LAYERS = 6;
+	static constexpr size_t LAYERS = 7;
 	static const size_t tri_count = 20*std::pow(4, LAYERS);
-	static const GLfloat shadowing_factor = std::pow(std::pow(0.9f, 1.0f/100.0f), std::pow(2.0f, (GLfloat)LAYERS));
+	static const GLfloat shadowing_factor = std::pow(std::pow(0.9f, 1.0f/40.0f), std::pow(2.0f, (GLfloat)LAYERS));
 
 	std::cout << "Using " << tri_count << " tris for particle lighting computation on " << n.particles.size() << " particles (SF " << shadowing_factor << ")" << std::endl;
 
@@ -141,6 +141,7 @@ void particlelighting::apply_lighting(particle_nebula_t& n)
 			size_t j = line_to_index<LAYERS>(s.pos, n.particles[i].pos);
 
 			GLfloat power = 1.0f / std::pow(dist+1.0f, 2.0f);
+			//GLfloat power = 1.0f;
 			light[i] += downcast(s.color) * tris_lighting[j] * power;
 			tris_lighting[j] *= shadowing_factor;
 		}
