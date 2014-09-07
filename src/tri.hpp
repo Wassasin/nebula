@@ -11,4 +11,20 @@ struct tri
 	, b(b)
 	, c(c)
 	{}
+
+	glm::vec3 centroid() const
+	{
+		return (a + b + c) / 3.0f;
+	}
+
+	tri operator*(GLfloat rhs)
+	{
+		glm::vec3 m = centroid();
+
+		return tri(
+			m + (a - m) * rhs,
+			m + (b - m) * rhs,
+			m + (c - m) * rhs
+		);
+	}
 };

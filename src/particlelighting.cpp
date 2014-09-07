@@ -28,7 +28,7 @@ static const glm::vec3 icosa_verts[12] =
 };
 
 template<size_t LAYER>
-inline size_t find_tri(glm::vec3 orig, glm::vec3 dir, tri t, size_t index)
+inline size_t find_tri(glm::vec3 orig, glm::vec3 dir, tri t, size_t index, GLfloat error)
 {
 	glm::vec3 ab = glm::normalize((t.a + t.b) / 2.0f);
 	glm::vec3 ac = glm::normalize((t.a + t.c) / 2.0f);
@@ -41,19 +41,21 @@ inline size_t find_tri(glm::vec3 orig, glm::vec3 dir, tri t, size_t index)
 		{ab, bc, ac}
 	};
 
+	error *= 3.0f;
+	const GLfloat factor = 1.0f + error;
 	for(size_t i = 0; i < 4; i++)
 	{
-		const tri& t2 = subdiv_tris[i];
+		const tri& t2 = subdiv_tris[i] * factor;
 		glm::vec3 bary_pos;
 		if(glm::intersectRayTriangle(orig, dir, t2.a, t2.c, t2.b, bary_pos))
-			return find_tri<LAYER-1>(orig, dir, t2, index*4+i);
+			return find_tri<LAYER-1>(orig, dir, t2, index*4+i, error);
 	}
 
 	assert(false);
 }
 
 template<>
-inline size_t find_tri<0>(glm::vec3, glm::vec3, tri, size_t index)
+inline size_t find_tri<0>(glm::vec3, glm::vec3, tri, size_t index, GLfloat)
 {
 	return index;
 }
@@ -74,7 +76,7 @@ size_t line_to_index(const glm::vec3 orig, const glm::vec3 targ)
 
 		glm::vec3 bary_pos;
 		if(glm::intersectRayTriangle(zero, dir, t.a, t.c, t.b, bary_pos))
-			return find_tri<LAYERS>(zero, dir, t, i);
+			return find_tri<LAYERS>(zero, dir, t, i, std::numeric_limits<GLfloat>::epsilon());
 	}
 
 	assert(false);
@@ -109,10 +111,11 @@ inline void draw_tris<0>(tri t)
 
 void particlelighting::apply_lighting(particle_nebula_t& n)
 {
-	static constexpr size_t LAYERS = 2;
+	static constexpr size_t LAYERS = 6;
 	static const size_t tri_count = 20*std::pow(4, LAYERS);
+	static const GLfloat shadowing_factor = std::pow(std::pow(0.9f, 1.0f/100.0f), std::pow(2.0f, (GLfloat)LAYERS));
 
-	std::cout << "Using " << tri_count << " tris for particle lighting computation" << std::endl;
+	std::cout << "Using " << tri_count << " tris for particle lighting computation on " << n.particles.size() << " particles (SF " << shadowing_factor << ")" << std::endl;
 
 	std::vector<size_t> tmp_index(n.particles.size());
 	std::iota(tmp_index.begin(), tmp_index.end(), 0);
@@ -134,13 +137,13 @@ void particlelighting::apply_lighting(particle_nebula_t& n)
 
 		for(size_t i : tmp_index)
 		{
+			GLfloat dist = glm::abs(glm::length(s.pos - n.particles[i].pos));
 			size_t j = line_to_index<LAYERS>(s.pos, n.particles[i].pos);
-			light[i] += downcast(s.color) * tris_lighting[j];
-			tris_lighting[j] *= 0.9995f;
-		}
 
-		for(GLfloat l : tris_lighting)
-			std::cout << l << std::endl;
+			GLfloat power = 1.0f / std::pow(dist+1.0f, 2.0f);
+			light[i] += downcast(s.color) * tris_lighting[j] * power;
+			tris_lighting[j] *= shadowing_factor;
+		}
 	}
 
 	for(size_t i = 0; i < n.particles.size(); i++)
@@ -158,7 +161,7 @@ void particlelighting::draw_debug()
 			icosa_verts[icosa_indices[i][2]],
 		};
 
-		draw_tris<3>(t);
+		draw_tris<5>(t);
 	}
 	glEnd();
 }
