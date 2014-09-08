@@ -86,8 +86,7 @@ std::vector<particle_t> volume_to_particles(const volume<glm::uvec4, X, Y, Z>& d
 
 					particles.emplace_back(particle_t({
 						glm::vec3((x + xdist)/fX, (y + ydist)/fY, (z + zdist)/fZ),
-						v,
-						-1.0
+						v
 					}));
 				}
 			}

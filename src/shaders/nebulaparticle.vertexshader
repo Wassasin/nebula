@@ -1,7 +1,7 @@
 #version 130
 
 in vec3 squareVertices;
-in vec4 xyzs; 
+in vec4 xyzs;
 in vec4 color;
 
 out vec2 UV;

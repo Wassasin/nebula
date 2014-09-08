@@ -121,6 +121,7 @@ void particlelighting::apply_lighting(particle_nebula_t& n)
 	std::vector<size_t> tmp_index(n.particles.size());
 	std::iota(tmp_index.begin(), tmp_index.end(), 0);
 
+	std::vector<GLfloat> zs(n.particles.size());
 	std::vector<glm::vec3> light(n.particles.size());
 	for(const star_t& s : n.stars)
 	{
@@ -128,12 +129,12 @@ void particlelighting::apply_lighting(particle_nebula_t& n)
 		std::vector<GLfloat> tris_lighting(tri_count, 1.0f);
 
 		// Sort particles on distance from the light source
-		for(particle_t& p : n.particles)
-			p.z = glm::distance(s.pos, p.pos);
+		for(size_t i = 0; i < n.particles.size(); ++i)
+			zs[i] = glm::distance(s.pos, n.particles[i].pos);
 
 		std::sort(tmp_index.begin(), tmp_index.end(), [&](const size_t a, const size_t b)
 		{
-			return n.particles[a].z < n.particles[b].z;
+			return zs[a] < zs[b];
 		});
 
 		for(size_t i : tmp_index)
@@ -142,7 +143,6 @@ void particlelighting::apply_lighting(particle_nebula_t& n)
 			size_t j = line_to_index<LAYERS>(s.pos, n.particles[i].pos);
 
 			GLfloat power = 1.0f / std::pow(dist+1.0f, 2.0f);
-			//GLfloat power = 1.0f;
 			light[i] += downcast(s.color) * tris_lighting[j] * power;
 			tris_lighting[j] *= shadowing_factor * (1.0f - density_factor * n.particles[i].color.a / 255.0f);
 		}

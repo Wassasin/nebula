@@ -39,50 +39,36 @@ void nebulaparticlescene::check_support()
 		throw std::runtime_error("Driver does not support OpenGL Shading Language");
 }
 
-void nebulaparticlescene::update_particles(const rendercontext& r)
+void nebulaparticlescene::update_particles(layer_t& layer, const rendercontext& r)
 {
 	const glm::mat4 cube_modelmat = glm::translate(glm::mat4(), m_cube_model);
 	const glm::mat4 mvp = m_mvp * cube_modelmat;
 
-	for(particle_t& p : m_nebula.particles)
-		p.z = (mvp * glm::vec4(p.pos.x, p.pos.y, p.pos.z, 0.0f)).z;
+	const size_t size = layer.particles.size();
 
-	std::sort(m_nebula.particles.begin(), m_nebula.particles.end(), [&](const particle_t& a, const particle_t& b)
+	for(size_t i = 0; i < size; ++i)
 	{
-		return a.z > b.z;
+		glm::vec3 pos(layer.particles[i].pos);
+		layer.zs[i] = (mvp * glm::vec4(pos.x, pos.y, pos.z, 0.0f)).z;
+	}
+
+	std::sort(layer.indices.begin(), layer.indices.end(), [&](const size_t i, const size_t j)
+	{
+		return layer.zs[i] > layer.zs[j];
 	});
 }
 
-void nebulaparticlescene::particle_pass(const rendercontext& r)
+void nebulaparticlescene::draw_particles(const layer_t& layer, GLuint texture, const rendercontext& r)
 {
 	const glm::mat4 cube_modelmat = glm::translate(glm::mat4(), m_cube_model);
 
-	{
-		size_t i = 0;
+	gl::bind_buffer(GL_ARRAY_BUFFER, layer.particle_vertexsize_buffer);
+	glBufferData(GL_ARRAY_BUFFER, layer.particles.size() * sizeof(rawparticle_t), NULL, GL_STREAM_DRAW); // Buffer orphaning
+	glBufferSubData(GL_ARRAY_BUFFER, 0, layer.particles.size() * sizeof(rawparticle_t), layer.particles.data());
 
-		for(const particle_t& p : m_nebula.particles)
-		{
-			m_particule_position_size_data[4*i+0] = p.pos.x;
-			m_particule_position_size_data[4*i+1] = p.pos.y;
-			m_particule_position_size_data[4*i+2] = p.pos.z;
-			m_particule_position_size_data[4*i+3] = (p.color.a/255.0f) * 0.004f;
-
-			m_particule_color_data[4*i+0] = p.color.r;
-			m_particule_color_data[4*i+1] = p.color.g;
-			m_particule_color_data[4*i+2] = p.color.b;
-			m_particule_color_data[4*i+3] = p.color.a * 0.5f;
-
-			i++;
-		}
-	}
-
-	gl::bind_buffer(GL_ARRAY_BUFFER, m_state->particles_position_buffer);
-	glBufferData(GL_ARRAY_BUFFER, m_nebula.particles.size() * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning
-	glBufferSubData(GL_ARRAY_BUFFER, 0, m_nebula.particles.size() * sizeof(GLfloat) * 4, m_particule_position_size_data.get());
-
-	gl::bind_buffer(GL_ARRAY_BUFFER, m_state->particles_color_buffer);
-	glBufferData(GL_ARRAY_BUFFER, m_nebula.particles.size() * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning
-	glBufferSubData(GL_ARRAY_BUFFER, 0, m_nebula.particles.size() * sizeof(GLubyte) * 4, m_particule_color_data.get());
+	gl::bind_buffer(GL_ARRAY_BUFFER, layer.particle_color_buffer);
+	glBufferData(GL_ARRAY_BUFFER, layer.particles.size() * sizeof(rawparticle_t), NULL, GL_STREAM_DRAW); // Buffer orphaning
+	glBufferSubData(GL_ARRAY_BUFFER, 0, layer.particles.size() * sizeof(rawparticle_t), layer.particles.data());
 
 	gl::enable(GL_BLEND);
 	gl::blend_function(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -90,7 +76,7 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 	m_program_particle.use();
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_state->particle_texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
 
 	m_program_particle.uniform<GLint>("textureSampler").set(0);
 
@@ -111,33 +97,34 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 		(void*)0 // array buffer offset
 	);
 
+	// Vertices + size
 	gl::enable_vertex_attribute_array(1);
-	gl::bind_buffer(GL_ARRAY_BUFFER, m_state->particles_position_buffer);
+	gl::bind_buffer(GL_ARRAY_BUFFER, layer.particle_vertexsize_buffer);
 	glVertexAttribPointer(
 		1,
 		4,
 		GL_FLOAT,
 		GL_FALSE, // normalized?
-		0, // stride
+		sizeof(rawparticle_t), // stride
 		(void*)0 // array buffer offset
 	);
 
 	gl::enable_vertex_attribute_array(2);
-	gl::bind_buffer(GL_ARRAY_BUFFER, m_state->particles_color_buffer);
+	gl::bind_buffer(GL_ARRAY_BUFFER, layer.particle_color_buffer);
 	glVertexAttribPointer(
 		2,
 		4,
-		GL_UNSIGNED_BYTE,
-		GL_TRUE, // normalized? *** YES, this means that the unsigned char[4] will be accessible with a vec4 (floats) in the shader ***
-		0, // stride
-		(void*)0 // array buffer offset
+		GL_FLOAT,
+		GL_FALSE, // normalized?
+		sizeof(rawparticle_t), // stride
+		(void*) (sizeof(decltype(rawparticle_t::pos)) + sizeof(decltype(rawparticle_t::size))) // array buffer offset
 	);
 
 	glVertexAttribDivisor(0, 0); // particles vertices : always reuse the same 4 vertices -> 0
 	glVertexAttribDivisor(1, 1); // positions : one per quad (its center) -> 1
 	glVertexAttribDivisor(2, 1); // color : one per quad -> 1
 
-	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, m_nebula.particles.size());
+	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, layer.particles.size());
 
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
@@ -148,26 +135,7 @@ void nebulaparticlescene::particle_pass(const rendercontext& r)
 	gl::use_program(0);
 }
 
-void nebulaparticlescene::star_pass(const rendercontext& r)
-{
-	const glm::mat4 cube_modelmat = glm::translate(glm::mat4(), m_cube_model);
-
-	glPointSize(5.0);
-	glBegin(GL_POINTS);
-
-	for(const auto& star : m_nebula.stars)
-	{
-		glm::vec4 starpos(star.pos.x, star.pos.y, star.pos.z, 1.0);
-		starpos = (m_mvp * cube_modelmat) * starpos;
-
-		glColor3f(star.color.r/255.0, star.color.g/255.0, star.color.b/255.0);
-		glVertex4f(starpos.x, starpos.y, starpos.z, starpos.w);
-	}
-
-	glEnd();
-}
-
-GLuint create_texture()
+GLuint create_particle_texture()
 {
 	static constexpr size_t size = 1024;
 	GLuint textureID;
@@ -196,6 +164,54 @@ GLuint create_texture()
 	return textureID;
 }
 
+GLuint create_star_texture()
+{
+	static constexpr size_t size = 1024;
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	GLubyte data[size][size][4];
+	for(size_t x = 0; x < size; ++x)
+		for(size_t y = 0; y < size; ++y)
+		{
+			GLfloat dist = glm::clamp(glm::distance(glm::vec2(0.5f, 0.5f), glm::vec2(x, y)/(GLfloat)size)*2.0f, 0.0f, 1.0f);
+			data[x][y][0] = 255;
+			data[x][y][1] = 255;
+			data[x][y][2] = 255;
+			data[x][y][3] = glm::clamp(255.0f * 64.0f * (1.0f - std::pow(dist, 0.01f)), 0.0f, 255.0f);
+		}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	return textureID;
+}
+
+nebulaparticlescene::layer_t::layer_t(const size_t size)
+: particles()
+, zs(size)
+, indices(size)
+, particle_vertexsize_buffer()
+, particle_color_buffer()
+{
+	particles.reserve(size);
+	std::iota(indices.begin(), indices.end(), 0);
+
+	glGenBuffers(1, &particle_vertexsize_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, particle_vertexsize_buffer);
+	glBufferData(GL_ARRAY_BUFFER, size * sizeof(rawparticle_t), NULL, GL_STREAM_DRAW); // Initialize with empty (NULL) buffer : it will be updated later, each frame.
+
+	glGenBuffers(1, &particle_color_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, particle_color_buffer);
+	glBufferData(GL_ARRAY_BUFFER, size * sizeof(rawparticle_t), NULL, GL_STREAM_DRAW); // Initialize with empty (NULL) buffer : it will be updated later, each frame.
+}
+
 nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, rendercontext& r)
 : m_nebula(nebula)
 , m_program_particle(false)
@@ -205,13 +221,15 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 {
 	r.add_cb(rcphase::init, [&](rendercontext& r) {
 		check_support();
+	});
 
-		gl::clear_color(0.0f, 0.0f, 0.0f, 0.0f);
-
+	r.add_cb(rcphase::init, [&](rendercontext& r) {
 		m_program_particle.attach(shader::from_file(shader_type::vertex, "shaders/nebulaparticle.vertexshader"));
 		m_program_particle.attach(shader::from_file(shader_type::fragment, "shaders/nebulaparticle.fragmentshader"));
 		m_program_particle.link();
+	});
 
+	r.add_cb(rcphase::init, [&](rendercontext& r) {
 		static const GLfloat g_vertex_buffer_data[] = {
 			-0.5f, -0.5f, 0.0f,
 			0.5f, -0.5f, 0.0f,
@@ -224,31 +242,31 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 		glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
-		GLuint particles_position_buffer;
-		glGenBuffers(1, &particles_position_buffer);
-		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
+		layer_t layer_bleed(0);
+		layer_t layer_dust(m_nebula.particles.size() + m_nebula.stars.size());
+		for(const particle_t& p : m_nebula.particles)
+			layer_dust.particles.emplace_back(rawparticle_t({
+				glm::vec3(p.pos.x, p.pos.y, p.pos.z),
+				(p.color.a/255.0f) * 0.004f,
+				glm::vec4(p.color.r/255.0f, p.color.g/255.0f, p.color.b/255.0f, p.color.a / 255.0f * 0.5f)
+			}));
 
-		// Initialize with empty (NULL) buffer : it will be updated later, each frame.
-		glBufferData(GL_ARRAY_BUFFER, m_nebula.particles.size() * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
-
-		// The VBO containing the colors of the particles
-		GLuint particles_color_buffer;
-		glGenBuffers(1, &particles_color_buffer);
-		glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
-
-		// Initialize with empty (NULL) buffer : it will be updated later, each frame.
-		glBufferData(GL_ARRAY_BUFFER, m_nebula.particles.size() * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
+		for(const star_t& s : m_nebula.stars)
+			layer_dust.particles.emplace_back(rawparticle_t({
+				glm::vec3(s.pos.x, s.pos.y, s.pos.z),
+				0.1f,
+				glm::vec4(s.color.r/255.0f, s.color.g/255.0f, s.color.b/255.0f, 1.0f)
+			}));
 
 		m_state.reset({
 			billboard_vertex_buffer,
-			particles_position_buffer,
-			particles_color_buffer,
-			//texture::loadDDS("textures/particle.DDS")
-			create_texture()
+			create_particle_texture(),
+			create_star_texture(),
+			{{
+				layer_bleed,
+				layer_dust
+			}}
 		});
-
-		m_particule_position_size_data.reset(new GLfloat[m_nebula.particles.size() * 4]);
-		m_particule_color_data.reset(new GLubyte[m_nebula.particles.size() * 4]);
 	});
 
 	r.add_cb(rcphase::init, [&](rendercontext& r) {
@@ -259,12 +277,14 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 	r.add_cb(rcphase::update, [&](rendercontext& r) {
 		glm::mat4 projection = glm::perspective(60.0f, (GLfloat)r.size().first/(GLfloat)r.size().second, 0.01f, 100.0f);
 		m_mvp = projection * r.camera.to_matrix();
+	});
 
-		update_particles(r);
+	r.add_cb(rcphase::update, [&](rendercontext& r) {
+		for(layer_t& l : m_state->layers)
+			update_particles(l, r);
 	});
 
 	r.add_cb(rcphase::draw, [&](rendercontext& r) {
-		particle_pass(r);
-		star_pass(r);
+		draw_particles(m_state->layers[(size_t)particle_type::PT_DUST], m_state->particle_texture, r);
 	});
 }

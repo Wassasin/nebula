@@ -70,9 +70,9 @@ void nebulagen::generate_cloud(const glm::vec3 fcenter, const GLfloat size, cons
 std::vector<star_t> nebulagen::generate_stars()
 {
 	return {
-		{glm::uvec3(240, 240, 220), glm::vec3(0.8, 0.5, 0.2)},
-		{glm::uvec3(110, 100, 255), glm::vec3(0.3, 0.8, 0.2)},
-		{glm::uvec3(50, 50, 255), glm::vec3(0.2, 0.4, 0.8)}
+		{glm::vec3(0.8, 0.5, 0.2), glm::uvec3(240, 240, 220)},
+		{glm::vec3(0.3, 0.8, 0.2), glm::uvec3(110, 100, 255)},
+		{glm::vec3(0.2, 0.4, 0.8), glm::uvec3(50, 50, 255)}
 	};
 }
 
