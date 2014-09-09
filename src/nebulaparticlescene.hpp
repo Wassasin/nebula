@@ -18,16 +18,14 @@ private:
 		glm::vec3 pos;
 		GLfloat size;
 		glm::vec4 color;
+
+		GLfloat tmpz;
 	};
 
 	struct layer_t
 	{
 		std::vector<rawparticle_t> particles;
-		std::vector<GLfloat> zs;
-		std::vector<size_t> indices;
-
-		GLuint particle_vertexsize_buffer;
-		GLuint particle_color_buffer;
+		GLuint particle_buffer;
 
 		layer_t(const size_t size);
 	};
