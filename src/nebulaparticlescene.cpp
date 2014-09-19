@@ -265,7 +265,7 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 
 	r.add_cb(rcphase::init, [&](rendercontext& r) {
 		size_t tex_dust = m_ta.add_texture(texture::load_tga("textures/dust.tga", 1024));
-		size_t tex_star = m_ta.add_texture(texture::load_tga("textures/sterretje.tga", 1024));
+		size_t tex_star = m_ta.add_texture(texture::load_tga("textures/star.tga", 1024));
 		m_ta.bind();
 
 		static const GLfloat g_vertex_buffer_data[] = {
@@ -280,8 +280,6 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 		glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
-		const GLfloat tilesize = 1.0f / (GLfloat)m_ta.tile_sqrtcount;
-
 		layer_t layer_bleed(0);
 		layer_t layer_dust(m_nebula.particles.size() + m_nebula.stars.size());
 		for(const particle_t& p : m_nebula.particles)
@@ -293,11 +291,12 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 				-1.0f
 			}));
 
+		GLfloat star_intensity = 1.3f;
 		for(const star_t& s : m_nebula.stars)
 			layer_dust.particles.emplace_back(rawparticle_t({
 				glm::vec3(s.pos.x, s.pos.y, s.pos.z),
-				0.1f,
-				glm::vec4(s.color.r/255.0f, s.color.g/255.0f, s.color.b/255.0f, 1.0f),
+				0.3f,
+				glm::vec4(s.color.r/255.0f, s.color.g/255.0f, s.color.b/255.0f, 1.0f)*star_intensity,
 				m_ta.get_fractionoffset(tex_star),
 				-1.0f
 			}));
