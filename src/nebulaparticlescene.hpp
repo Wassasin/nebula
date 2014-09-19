@@ -7,6 +7,7 @@
 #include "gl/shader.hpp"
 #include "gl/vao.hpp"
 #include "gl/vbo.hpp"
+#include "gl/textureatlas.hpp"
 
 #include "nebula.hpp"
 
@@ -18,6 +19,7 @@ private:
 		glm::vec3 pos;
 		GLfloat size;
 		glm::vec4 color;
+		glm::vec2 tex_offset;
 
 		GLfloat tmpz;
 	};
@@ -40,14 +42,14 @@ private:
 	struct state_t
 	{
 		GLuint billboard_vertex_buffer;
-		GLuint particle_texture, star_texture;
+		GLuint particle_texture;
 
 		std::array<layer_t, (size_t)particle_type::PT_COUNT> layers;
 	};
 
 	static void check_support();
 	void update_particles(layer_t& layer, const rendercontext& r);
-	void draw_particles(const layer_t& layer, GLuint texture, const rendercontext& r);
+	void draw_particles(const layer_t& layer, GLuint texture, GLuint atlasSize, const rendercontext& r);
 
 	particle_nebula_t m_nebula;
 
@@ -59,6 +61,8 @@ private:
 
 	glm::vec3 m_cube_model;
 	glm::mat4 m_mvp;
+
+	textureatlas m_ta;
 
 public:
 	nebulaparticlescene(const particle_nebula_t& nebula, rendercontext& r);

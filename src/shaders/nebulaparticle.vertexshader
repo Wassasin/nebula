@@ -3,9 +3,12 @@
 in vec3 squareVertices;
 in vec4 xyzs;
 in vec4 color;
+in vec2 texOffset;
 
 out vec2 UV;
 out vec4 particlecolor;
+
+uniform float tilesize;
 
 uniform vec3 CameraRight_worldspace;
 uniform vec3 CameraUp_worldspace;
@@ -22,8 +25,8 @@ void main()
 		+ CameraUp_worldspace * squareVertices.y * particleSize;
 
 	gl_Position = VP * vec4(vertexPosition_worldspace, 1.0f);
-
-	UV = squareVertices.xy + vec2(0.5, 0.5);
-	particlecolor = color;
+	UV = (squareVertices.xy + vec2(0.5, 0.5)) * tilesize + texOffset;
+	
+    particlecolor = color;
 }
 

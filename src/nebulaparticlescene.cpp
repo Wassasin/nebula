@@ -9,6 +9,7 @@
 
 #include "gl/gl.hpp"
 #include "gl/texture.hpp"
+#include "gl/textureatlas.hpp"
 
 #include "nebulagen.hpp"
 #include "particlelighting.hpp"
@@ -55,7 +56,7 @@ void nebulaparticlescene::update_particles(layer_t& layer, const rendercontext& 
 	});
 }
 
-void nebulaparticlescene::draw_particles(const layer_t& layer, GLuint texture, const rendercontext& r)
+void nebulaparticlescene::draw_particles(const layer_t& layer, GLuint texture, GLuint atlasSize, const rendercontext& r)
 {
 	const glm::mat4 cube_modelmat = glm::translate(glm::mat4(), m_cube_model);
 
@@ -71,6 +72,7 @@ void nebulaparticlescene::draw_particles(const layer_t& layer, GLuint texture, c
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
+	m_program_particle.uniform<GLfloat>("tilesize").set(m_ta.get_fractionsize());
 	m_program_particle.uniform<GLint>("textureSampler").set(0);
 
 	glm::mat4 vp = r.camera.to_matrix();
@@ -102,6 +104,7 @@ void nebulaparticlescene::draw_particles(const layer_t& layer, GLuint texture, c
 		(void*)0 // array buffer offset
 	);
 
+	// Color
 	gl::enable_vertex_attribute_array(2);
 	gl::bind_buffer(GL_ARRAY_BUFFER, layer.particle_buffer);
 	glVertexAttribPointer(
@@ -113,40 +116,85 @@ void nebulaparticlescene::draw_particles(const layer_t& layer, GLuint texture, c
 		(void*) (sizeof(decltype(rawparticle_t::pos)) + sizeof(decltype(rawparticle_t::size))) // array buffer offset
 	);
 
+	// Index
+	gl::enable_vertex_attribute_array(3);
+	gl::bind_buffer(GL_ARRAY_BUFFER, layer.particle_buffer);
+	glVertexAttribPointer(
+		3,
+		2,
+		GL_FLOAT,
+		GL_FALSE, // normalized?
+		sizeof(rawparticle_t), // stride
+		(void*) (sizeof(decltype(rawparticle_t::pos)) + sizeof(decltype(rawparticle_t::size)) + sizeof(decltype(rawparticle_t::color))) // array buffer offset
+	);
+
 	glVertexAttribDivisor(0, 0); // particles vertices : always reuse the same 4 vertices -> 0
 	glVertexAttribDivisor(1, 1); // positions : one per quad (its center) -> 1
 	glVertexAttribDivisor(2, 1); // color : one per quad -> 1
+	glVertexAttribDivisor(3, 1);
 
 	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, layer.particles.size());
 
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(2);
+	glDisableVertexAttribArray(3);
 
 	gl::disable(GL_BLEND);
 
 	gl::use_program(0);
 }
 
+constexpr unsigned log2(unsigned n, unsigned p = 0) {
+	return (n <= 1) ? p : log2(n / 2, p + 1);
+}
+
 GLuint create_particle_texture()
 {
 	static constexpr size_t size = 1024;
+	static constexpr size_t elements = 2;
+
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 
-	GLubyte data[size][size][4];
-	for(size_t x = 0; x < size; ++x)
-		for(size_t y = 0; y < size; ++y)
-		{
-			GLfloat dist = glm::clamp(glm::distance(glm::vec2(0.5f, 0.5f), glm::vec2(x, y)/(GLfloat)size)*2.0f, 0.0f, 1.0f);
-			data[x][y][0] = 255;
-			data[x][y][1] = 255;
-			data[x][y][2] = 255;
-			data[x][y][3] = glm::clamp(255.0f * 64.0f * (1.0f - std::pow(dist, 0.01f)), 0.0f, 255.0f);
-		}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	typedef GLubyte data_t[size*elements][4];
+	data_t* data = new data_t[size*elements];
+	std::cerr << elements << std::endl;
+
+	// Dust
+	{
+		size_t xoffset = size * 0, yoffset = size * 0;
+		for(size_t x = 0; x < size; ++x)
+			for(size_t y = 0; y < size; ++y)
+			{
+				GLfloat dist = glm::clamp(glm::distance(glm::vec2(0.5f, 0.5f), glm::vec2(x, y)/(GLfloat)size)*2.0f, 0.0f, 1.0f);
+				data[x+xoffset][y+yoffset][0] = 255;
+				data[x+xoffset][y+yoffset][1] = 255;
+				data[x+xoffset][y+yoffset][2] = 255;
+				data[x+xoffset][y+yoffset][3] = glm::clamp(255.0f * 64.0f * (1.0f - std::pow(dist, 0.01f)), 0.0f, 255.0f);
+			}
+	}
+
+	// Star
+	{
+		size_t offset = size * 0, yoffset = size * 1;
+		for(size_t x = 0; x < size; ++x)
+			for(size_t y = 0; y < size; ++y)
+			{
+				GLfloat dist = glm::clamp(glm::distance(glm::vec2(0.5f, 0.5f), glm::vec2(x, y)/(GLfloat)size)*2.0f, 0.0f, 1.0f);
+				GLfloat sphere = glm::clamp(255.0f * 64.0f * (1.0f - std::pow(dist, 0.2f)), 0.0f, 255.0f);
+				//bool blaat = ((GLfloat)x / size)
+				data[x+offset][y+yoffset][0] = 255;
+				data[x+offset][y+yoffset][1] = 255;
+				data[x+offset][y+yoffset][2] = 255;
+				data[x+offset][y+yoffset][3] = glm::clamp(255.0f * 64.0f * (1.0f - std::pow(dist, 0.2f)), 0.0f, 255.0f);
+			}
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size*elements, size*elements, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	delete[] data;
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -203,6 +251,7 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 , m_state()
 , m_cube_model(-0.5f, -0.5f, -0.5f)
 , m_mvp()
+, m_ta(4)
 {
 	r.add_cb(rcphase::init, [&](rendercontext& r) {
 		check_support();
@@ -215,6 +264,10 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 	});
 
 	r.add_cb(rcphase::init, [&](rendercontext& r) {
+		size_t tex_dust = m_ta.add_texture(texture::load_tga("textures/dust.tga", 1024));
+		size_t tex_star = m_ta.add_texture(texture::load_tga("textures/sterretje.tga", 1024));
+		m_ta.bind();
+
 		static const GLfloat g_vertex_buffer_data[] = {
 			-0.5f, -0.5f, 0.0f,
 			0.5f, -0.5f, 0.0f,
@@ -227,6 +280,8 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 		glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
+		const GLfloat tilesize = 1.0f / (GLfloat)m_ta.tile_sqrtcount;
+
 		layer_t layer_bleed(0);
 		layer_t layer_dust(m_nebula.particles.size() + m_nebula.stars.size());
 		for(const particle_t& p : m_nebula.particles)
@@ -234,6 +289,7 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 				glm::vec3(p.pos.x, p.pos.y, p.pos.z),
 				(p.color.a/255.0f) * 0.008f,
 				glm::vec4(p.color.r/255.0f, p.color.g/255.0f, p.color.b/255.0f, p.color.a / 255.0f * 0.5f),
+				m_ta.get_fractionoffset(tex_dust),
 				-1.0f
 			}));
 
@@ -242,13 +298,13 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 				glm::vec3(s.pos.x, s.pos.y, s.pos.z),
 				0.1f,
 				glm::vec4(s.color.r/255.0f, s.color.g/255.0f, s.color.b/255.0f, 1.0f),
+				m_ta.get_fractionoffset(tex_star),
 				-1.0f
 			}));
 
 		m_state.reset({
 			billboard_vertex_buffer,
-			create_particle_texture(),
-			create_star_texture(),
+			m_ta.get_texture_id(),
 			{{
 				layer_bleed,
 				layer_dust
@@ -272,6 +328,6 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 	});
 
 	r.add_cb(rcphase::draw, [&](rendercontext& r) {
-		draw_particles(m_state->layers[(size_t)particle_type::PT_DUST], m_state->particle_texture, r);
+		draw_particles(m_state->layers[(size_t)particle_type::PT_DUST], m_state->particle_texture, 2, r);
 	});
 }

@@ -131,8 +131,13 @@ class cli
 	static particle_nebula_t acquire_particles(const options& opt)
 	{
 		return cache<particle_nebula_t>::acquire("particles.msgpack.gz", [&](){
-			nebulagen::nebula_t nebula = acquire_volume(opt);
-			particle_nebula_t pnebula(volume_to_particles(nebula.dust, opt.seed), nebula.stars);
+			particle_nebula_t pnebula;
+
+			{
+				nebulagen::nebula_t nebula = acquire_volume(opt);
+				pnebula = particle_nebula_t(volume_to_particles(nebula.dust, opt.seed), nebula.stars);
+			}
+
 			particlelighting::apply_lighting(pnebula);
 			return pnebula;
 		});
