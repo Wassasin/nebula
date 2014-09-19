@@ -121,7 +121,7 @@ volume<glm::uvec4, nebulagen::X, nebulagen::Y, nebulagen::Z> nebulagen::generate
 
 				GLfloat density = absorbant + reflective;
 
-				dust_volume[pos].a = 255 * density;
+				dust_volume[pos].a = 255 * glm::clamp(density, 0.0f, 1.0f);
 				set_rgb(
 					dust_volume[pos],
 					upcast(glm::mix(downcast(brownish), downcast(blackish), absorbant / density))

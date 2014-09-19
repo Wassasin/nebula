@@ -56,11 +56,12 @@ struct particle_nebula_t
 	MSGPACK_DEFINE(particles, stars)
 };
 
-const static size_t MAX_PARTICLE_PER_VOXEL = 20;
+const static size_t MAX_PARTICLE_PER_VOXEL = 5;
 
 template<size_t X, size_t Y, size_t Z>
 std::vector<particle_t> volume_to_particles(const volume<glm::uvec4, X, Y, Z>& dust, int seed)
 {
+	std::cerr << "Instancing particles" << std::endl;
 	const static int mean = 100;
 
 	std::default_random_engine engine(seed+1);
@@ -75,8 +76,11 @@ std::vector<particle_t> volume_to_particles(const volume<glm::uvec4, X, Y, Z>& d
 		for(size_t y = 0; y < Y; ++y)
 			for(size_t z = 0; z < Z; ++z)
 			{
-				const glm::uvec4& v = dust[glm::uvec3(x, y, z)];
-				size_t particle_count = v.a / (255 / MAX_PARTICLE_PER_VOXEL);
+				const glm::uvec4 v = dust[glm::uvec3(x, y, z)];
+				size_t particle_count = (GLfloat)v.a / (255.0f / (GLfloat)MAX_PARTICLE_PER_VOXEL);
+
+				assert(v.a <= 255);
+				assert(particle_count <= MAX_PARTICLE_PER_VOXEL);
 
 				for(size_t i = 0; i < particle_count; i++)
 				{

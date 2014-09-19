@@ -9,7 +9,7 @@ namespace msgpack {
 
 	inline glm::uvec3& operator>>(object o, glm::uvec3& t)
 	{
-		uint8_t x, y, z;
+		uint32_t x, y, z;
 
 		if(o.type != type::ARRAY) { throw type_error(); }
 		if(o.via.array.size != 3) { throw type_error(); }
@@ -26,15 +26,15 @@ namespace msgpack {
 	inline packer<Stream>& operator<<(packer<Stream>& o, const glm::uvec3& x)
 	{
 		o.pack_array(3);
-		o.pack((uint8_t)x.x);
-		o.pack((uint8_t)x.y);
-		o.pack((uint8_t)x.z);
+		o.pack((uint32_t)x.x);
+		o.pack((uint32_t)x.y);
+		o.pack((uint32_t)x.z);
 		return o;
 	}
 
 	inline glm::uvec4& operator>>(object o, glm::uvec4& x)
 	{
-		uint8_t r, g, b, a;
+		uint32_t r, g, b, a;
 
 		if(o.type != type::ARRAY) { throw type_error(); }
 		if(o.via.array.size != 4) { throw type_error(); }
@@ -52,10 +52,10 @@ namespace msgpack {
 	inline packer<Stream>& operator<<(packer<Stream>& o, const glm::uvec4& x)
 	{
 		o.pack_array(4);
-		o.pack((uint8_t)x.r);
-		o.pack((uint8_t)x.g);
-		o.pack((uint8_t)x.b);
-		o.pack((uint8_t)x.a);
+		o.pack((uint32_t)x.r);
+		o.pack((uint32_t)x.g);
+		o.pack((uint32_t)x.b);
+		o.pack((uint32_t)x.a);
 		return o;
 	}
 
