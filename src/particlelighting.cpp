@@ -76,7 +76,7 @@ size_t line_to_index(const glm::vec3 orig, const glm::vec3 targ)
 
 		glm::vec3 bary_pos;
 		if(glm::intersectRayTriangle(zero, dir, t.a, t.c, t.b, bary_pos))
-			return find_tri<LAYERS>(zero, dir, t, i, std::numeric_limits<GLfloat>::epsilon());
+			return find_tri<LAYERS>(zero, dir, t, i, 3.0f*std::numeric_limits<GLfloat>::epsilon());
 	}
 
 	assert(false);
@@ -143,13 +143,13 @@ void particlelighting::apply_lighting(particle_nebula_t& n)
 			size_t j = line_to_index<LAYERS>(s.pos, n.particles[i].pos);
 
 			GLfloat power = 1.0f / std::pow(dist+1.0f, 2.0f);
-			light[i] += downcast(s.color) * tris_lighting[j] * power;
+			light[i] += s.color * tris_lighting[j] * power;
 			tris_lighting[j] *= shadowing_factor * (1.0f - density_factor * n.particles[i].color.a / 255.0f);
 		}
 	}
 
 	for(size_t i = 0; i < n.particles.size(); i++)
-		set_rgb(n.particles[i].color, upcast(downcast(n.particles[i].color.rgb()) * light[i]));
+		set_rgb(n.particles[i].color, n.particles[i].color.rgb() * light[i]);
 }
 
 void particlelighting::draw_debug()

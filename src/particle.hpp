@@ -6,7 +6,7 @@
 struct particle_t
 {
 	glm::vec3 pos;
-	glm::uvec4 color;
+	glm::vec4 color;
 
 	MSGPACK_DEFINE(pos, color)
 };

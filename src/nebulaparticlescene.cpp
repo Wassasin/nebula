@@ -196,8 +196,8 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 		for(const particle_t& p : m_nebula.particles)
 			layer_dust.particles.emplace_back(rawparticle_t({
 				glm::vec3(p.pos.x, p.pos.y, p.pos.z),
-				(p.color.a/255.0f) * 0.008f,
-				glm::vec4(p.color.r/255.0f, p.color.g/255.0f, p.color.b/255.0f, p.color.a / 255.0f * 0.5f),
+				p.color.a * 0.008f,
+				glm::vec4(p.color.r, p.color.g, p.color.b, p.color.a),
 				m_ta.get_fractionoffset(tex_dust),
 				-1.0f
 			}));
@@ -207,7 +207,7 @@ nebulaparticlescene::nebulaparticlescene(const particle_nebula_t& nebula, render
 			layer_dust.particles.emplace_back(rawparticle_t({
 				glm::vec3(s.pos.x, s.pos.y, s.pos.z),
 				0.3f,
-				glm::vec4(s.color.r/255.0f, s.color.g/255.0f, s.color.b/255.0f, 1.0f)*star_intensity,
+				glm::vec4(s.color.r, s.color.g, s.color.b, 1.0f)*star_intensity,
 				m_ta.get_fractionoffset(tex_star),
 				-1.0f
 			}));

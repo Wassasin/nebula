@@ -5,7 +5,7 @@
 struct star_t
 {
 	glm::vec3 pos;
-	glm::uvec3 color;
+	glm::vec3 color;
 
 	MSGPACK_DEFINE(pos, color)
 };

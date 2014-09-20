@@ -50,12 +50,12 @@ GLuint nebulascene::create_volumetexture()
 			for(size_t z = 0; z < nebulagen::SIZE; ++z)
 			{
 				size_t i = x * nebulagen::SIZE * nebulagen::SIZE + y * nebulagen::SIZE + z;
-				glm::uvec4& v = m_nebula.dust[glm::uvec3(x, y, z)];
+				glm::vec4& v = m_nebula.dust[glm::uvec3(x, y, z)];
 
-				data[i*4+0] = v.r;
-				data[i*4+1] = v.g;
-				data[i*4+2] = v.b;
-				data[i*4+3] = v.a;
+				data[i*4+0] = v.r*255.0f;
+				data[i*4+1] = v.g*255.0f;
+				data[i*4+2] = v.b*255.0f;
+				data[i*4+3] = v.a*255.0f;
 			}
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT,1);
@@ -193,7 +193,7 @@ void nebulascene::star_pass(const rendercontext& r)
 		glm::vec4 starpos(star.pos.x, star.pos.y, star.pos.z, 1.0);
 		starpos = (m_mvp * cube_modelmat) * starpos;
 
-		glColor3f(star.color.r/255.0, star.color.g/255.0, star.color.b/255.0);
+		glColor3f(star.color.r, star.color.g, star.color.b);
 		glVertex4f(starpos.x, starpos.y, starpos.z, starpos.w);
 	}
 

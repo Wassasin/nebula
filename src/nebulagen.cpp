@@ -43,46 +43,39 @@ void nebulagen::generate_cloud(const glm::vec3 fcenter, const GLfloat size, cons
 
 				glm::vec3 orb = glm::sin(objfpos*(GLfloat)M_PI);
 
-				GLuint density = (
-					255.0 *
-					exp_curve(
-						glm::clamp(
-							(
-								(GLfloat) std::pow(orb.x * orb.y * orb.z, 2.0) +
-								s.octave_noise(5.0f, 0.6f, 1.0f, fpos + glm::vec3(noise_mod))
+				GLfloat density = exp_curve(
+					glm::clamp(
+						(
+							(GLfloat) std::pow(orb.x * orb.y * orb.z, 2.0) +
+							s.octave_noise(5.0f, 0.6f, 1.0f, fpos + glm::vec3(noise_mod))
 							),
-							0.5f,
-							1.5f
+						0.5f,
+						1.5f
 						) - 0.5f,
-						0.4f,
-						40.0f
-					)
+					0.4f,
+					40.0f
 				);
 
-				density_volume[pos] = glm::clamp(
-					(uint16_t)(density + density_volume[pos]),
-					(uint16_t) 0,
-					(uint16_t) 255
-				);
+				density_volume[pos] = glm::clamp(density + density_volume[pos], 0.0f, 1.0f);
 			}
 }
 
 std::vector<star_t> nebulagen::generate_stars()
 {
 	return {
-		{glm::vec3(0.8, 0.5, 0.2), glm::uvec3(240, 240, 220)},
-		{glm::vec3(0.3, 0.8, 0.2), glm::uvec3(110, 100, 255)},
-		{glm::vec3(0.2, 0.4, 0.8), glm::uvec3(50, 50, 255)}
+		{glm::vec3(0.8, 0.5, 0.2), downcast(glm::uvec3(240, 240, 220))},
+		{glm::vec3(0.3, 0.8, 0.2), downcast(glm::uvec3(110, 100, 255))},
+		{glm::vec3(0.2, 0.4, 0.8), downcast(glm::uvec3(50, 50, 255))}
 	};
 }
 
-volume<glm::uvec4, nebulagen::X, nebulagen::Y, nebulagen::Z> nebulagen::generate_dust()
+volume<glm::vec4, nebulagen::X, nebulagen::Y, nebulagen::Z> nebulagen::generate_dust()
 {
 	simplex s(m_seed);
 	std::default_random_engine engine(m_seed+1);
 
-	static const glm::uvec3 brownish(255, 222, 150);
-	static const glm::uvec3 blackish(10, 1, 1);
+	static const glm::vec3 brownish(downcast(glm::uvec3(255, 222, 150)));
+	static const glm::vec3 blackish(downcast(glm::uvec3(10, 1, 1)));
 
 	std::cerr << "Seeding dust" << std::endl;
 
@@ -106,25 +99,22 @@ volume<glm::uvec4, nebulagen::X, nebulagen::Y, nebulagen::Z> nebulagen::generate
 
 	std::cerr << "Drawing dust" << std::endl;
 
-	volume<glm::uvec4, X, Y, Z> dust_volume;
+	volume<glm::vec4, X, Y, Z> dust_volume;
 
 	for(size_t x = 0; x < X; ++x)
 		for(size_t y = 0; y < Y; ++y)
 			for(size_t z = 0; z < Z; ++z)
 			{
 				constexpr GLfloat division = 0.75;
-
 				glm::uvec3 pos(x, y, z);
 
 				GLfloat absorbant = absorbant_volume[pos] * division;
 				GLfloat reflective = reflective_volume[pos] * (1.0 - division);
 
-				GLfloat density = absorbant + reflective;
-
-				dust_volume[pos].a = 255 * glm::clamp(density, 0.0f, 1.0f);
+				dust_volume[pos].a = glm::clamp(absorbant_volume[pos] + reflective_volume[pos], 0.0f, 1.0f);
 				set_rgb(
 					dust_volume[pos],
-					upcast(glm::mix(downcast(brownish), downcast(blackish), absorbant / density))
+					glm::mix(brownish, blackish, absorbant / (absorbant + reflective))
 				);
 			}
 

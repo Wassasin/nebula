@@ -12,6 +12,8 @@
 template<typename T>
 class MsgpackReader
 {
+	const static size_t BUFFERSIZE = 1024*1024*1024;
+
 	std::ifstream m_fi;
 	boost::iostreams::filtering_istream m_si;
 	msgpack::unpacker m_pac;
@@ -22,7 +24,7 @@ class MsgpackReader
 
 	bool consume()
 	{
-		m_pac.reserve_buffer(32*1024);
+		m_pac.reserve_buffer(64*1024);
 
 		auto len = boost::iostreams::read(m_si, m_pac.buffer(), m_pac.buffer_capacity());
 
@@ -39,7 +41,7 @@ public:
 	MsgpackReader(std::string filename)
 	: m_fi(filename, std::ios_base::binary)
 	, m_si()
-	, m_pac(64*1024*1024) // We use large objects, which will fail to load if buffer is not big enough
+	, m_pac(BUFFERSIZE) // We use large objects, which will fail to load if buffer is not big enough
 	, m_zone()
 	{
 		m_si.push(boost::iostreams::gzip_decompressor());
@@ -70,7 +72,7 @@ public:
 		try
 		{
 			obj.convert(&x); // Reference will live until next read call (see msgpack::zone, m_zone)
-		} catch(msgpack::type_error e)
+		} catch(msgpack::type_error)
 		{
 			throw std::runtime_error("Msgpack type problem. Might be a broken file; or that your object was too big.");
 		}
@@ -78,7 +80,7 @@ public:
 		auto tmp = result.zone();
 		m_zone.reset(tmp.release()); // Yield pointer to shared_ptr, release ownership
 
-		if(m_pac.message_size() > 64*1024*1024)
+		if(m_pac.message_size() > BUFFERSIZE)
 			throw std::runtime_error("Msgpack message is too large");
 
 		return true;

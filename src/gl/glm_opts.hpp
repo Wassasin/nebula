@@ -2,7 +2,14 @@
 
 #include "glm_include.hpp"
 
-static inline void set_rgb(glm::uvec4& x, const glm::uvec3 color)
+static inline void set_rgb(glm::vec4&x, const glm::vec3& color)
+{
+	x.r = color.r;
+	x.g = color.g;
+	x.b = color.b;
+}
+
+static inline void set_rgb(glm::uvec4& x, const glm::uvec3& color)
 {
 	x.r = color.r;
 	x.g = color.g;

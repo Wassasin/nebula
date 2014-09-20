@@ -84,4 +84,30 @@ namespace msgpack {
 		return o;
 	}
 
+	inline glm::vec4& operator>>(object o, glm::vec4& t)
+	{
+		GLfloat x, y, z, w;
+
+		if(o.type != type::ARRAY) { throw type_error(); }
+		if(o.via.array.size != 4) { throw type_error(); }
+		o.via.array.ptr[0].convert(&x);
+		o.via.array.ptr[1].convert(&y);
+		o.via.array.ptr[2].convert(&z);
+		o.via.array.ptr[3].convert(&w);
+
+		t = glm::vec4(x, y, z, w);
+
+		return t;
+	}
+
+	template <typename Stream>
+	inline packer<Stream>& operator<<(packer<Stream>& o, const glm::vec4& x)
+	{
+		o.pack_array(4);
+		o.pack((GLfloat)x.x);
+		o.pack((GLfloat)x.y);
+		o.pack((GLfloat)x.z);
+		o.pack((GLfloat)x.w);
+		return o;
+	}
 }

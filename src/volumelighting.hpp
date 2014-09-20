@@ -11,7 +11,7 @@ class volumelighting
 {
 	static constexpr GLfloat fX = X, fY = Y, fZ = Z;
 
-	static GLfloat raycast_stars(const std::vector<star_t>& nebula_stars, volume<glm::vec3, X, Y, Z>& light_volume, const volume<glm::uvec4, X, Y, Z>& dust_volume)
+	static GLfloat raycast_stars(const std::vector<star_t>& nebula_stars, volume<glm::vec3, X, Y, Z>& light_volume, const volume<glm::vec4, X, Y, Z>& dust_volume)
 	{
 		static constexpr GLfloat occlusion = 0.005;
 		static constexpr GLfloat stepsize = 0.001;
@@ -61,7 +61,7 @@ class volumelighting
 
 						if(intensity > 0.0) // If not completely occluded
 						{
-							color += downcast(star.color) * intensity;
+							color += star.color * intensity;
 							total_intensity += intensity;
 						}
 					}
@@ -73,18 +73,18 @@ class volumelighting
 		return max_intensity;
 	}
 
-	static void apply_mockup_to_dust(volume<glm::uvec4, X, Y, Z>& nebula_dust, const volume<glm::uvec4, X, Y, Z>& dust_volume)
+	static void apply_mockup_to_dust(volume<glm::uvec4, X, Y, Z>& nebula_dust, const volume<glm::vec4, X, Y, Z>& dust_volume)
 	{
 		for(size_t x = 0; x < X; ++x)
 			for(size_t y = 0; y < Y; ++y)
 				for(size_t z = 0; z < Z; ++z)
 				{
 					glm::uvec3 pos(x, y, z);
-					nebula_dust[pos] = glm::uvec4(x, y, z, glm::clamp((int)dust_volume[pos].a, 0, 255));
+					nebula_dust[pos] = glm::vec4(x/fX, y/fY, z/fZ, glm::clamp(dust_volume[pos].a, 0.0f, 1.0f));
 				}
 	}
 
-	static void apply_lighting_to_dust(volume<glm::uvec4, X, Y, Z>& nebula_dust, const volume<glm::vec3, X, Y, Z>& light_volume, const volume<glm::uvec4, X, Y, Z>& dust_volume, const GLfloat intensity_multiplier)
+	static void apply_lighting_to_dust(volume<glm::vec4, X, Y, Z>& nebula_dust, const volume<glm::vec3, X, Y, Z>& light_volume, const volume<glm::vec4, X, Y, Z>& dust_volume, const GLfloat intensity_multiplier)
 	{
 		for(size_t x = 0; x < X; ++x)
 			for(size_t y = 0; y < Y; ++y)
@@ -92,9 +92,9 @@ class volumelighting
 				{
 					glm::uvec3 pos(x, y, z);
 
-					glm::vec3 color_tmp = (light_volume[pos] * intensity_multiplier) * downcast(dust_volume[pos].rgb());
-					set_rgb(nebula_dust[pos], upcast(color_tmp));
-					nebula_dust[pos].a = glm::clamp((int)dust_volume[pos].a, 0, 255);
+					glm::vec3 color_tmp = (light_volume[pos] * intensity_multiplier) * dust_volume[pos].rgb();
+					set_rgb(nebula_dust[pos], color_tmp);
+					nebula_dust[pos].a = glm::clamp(dust_volume[pos].a, 0.0f, 1.0f);
 				}
 	}
 
