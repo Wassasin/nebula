@@ -10,6 +10,7 @@
 
 #include "nebulagen.hpp"
 #include "volumelighting.hpp"
+#include "volumeparticletransform.hpp"
 #include "particlelighting.hpp"
 
 #include "simplescene.hpp"
